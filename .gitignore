@@ -111,3 +111,5 @@ lerna-debug.log*
 .vscode
 *.swp
 *.swo
+
+/generated/prisma
