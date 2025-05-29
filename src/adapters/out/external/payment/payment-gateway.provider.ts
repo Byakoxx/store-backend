@@ -6,23 +6,23 @@ import {
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import { WompiTransactionStatusDto } from 'src/shared/dto/wompi-transaction-status.dto';
+import { PaymentTransactionStatusDto } from 'src/shared/dto/payment-transaction-status.dto';
 
 @Injectable()
-export class WompiPaymentProvider {
+export class PaymentGatewayProvider {
   constructor(private readonly httpService: HttpService) {}
 
   async getAcceptanceToken(apiUrl: string): Promise<string> {
     try {
       const response = await firstValueFrom(
         this.httpService.get(
-          `${apiUrl}/merchants/${process.env.WOMPI_PUBLIC_KEY}`,
+          `${apiUrl}/merchants/${process.env.PAYMENT_PUBLIC_KEY}`,
         ),
       );
       return response.data.data.presigned_acceptance.acceptance_token;
     } catch {
       throw new HttpException(
-        'Error getting acceptance token from Wompi',
+        'Error getting acceptance token from Payment Gateway',
         HttpStatus.BAD_GATEWAY,
       );
     }
@@ -56,17 +56,21 @@ export class WompiPaymentProvider {
       return response.data;
     } catch (error) {
       console.error(
-        'Error creating payment source in Wompi:',
+        'Error creating payment source in Payment Gateway:',
         error?.response?.data || error,
       );
       throw new HttpException(
-        'Error creating payment source in Wompi',
+        'Error creating payment source in Payment Gateway',
         HttpStatus.BAD_GATEWAY,
       );
     }
   }
 
-  async createTransaction(payload: any, privateKey: string, apiUrl: string) {
+  async createTransaction(
+    payload: any,
+    privateKey: string,
+    apiUrl: string,
+  ): Promise<any> {
     try {
       const response = await firstValueFrom(
         this.httpService.post(`${apiUrl}/transactions`, payload, {
@@ -78,30 +82,26 @@ export class WompiPaymentProvider {
       );
       return response.data;
     } catch (error) {
-      if (
-        error.response &&
-        error.response.status === 422 &&
-        error.response.data?.error?.type === 'INPUT_VALIDATION_ERROR'
-      ) {
-        // Error de validación de datos de usuario
-        throw new BadRequestException(error.response.data.error.messages);
+      if (error?.response?.status === 422) {
+        throw new BadRequestException(
+          error?.response?.data?.error?.messages || 'Validation error',
+        );
       }
-      // Otros errores (por ejemplo, problemas de red, gateway, etc.)
       throw new HttpException(
-        'Error creating transaction in Wompi',
+        'Error creating transaction in Payment Gateway',
         HttpStatus.BAD_GATEWAY,
       );
     }
   }
 
-  async getTransactionWompiStatus(
+  async getTransactionGatewayStatus(
     transactionId: string,
     apiUrl: string,
     privateKey: string,
-  ): Promise<WompiTransactionStatusDto> {
+  ): Promise<PaymentTransactionStatusDto> {
     try {
       const response = await firstValueFrom(
-        this.httpService.get<WompiTransactionStatusDto>(
+        this.httpService.get<PaymentTransactionStatusDto>(
           `${apiUrl}/transactions/${transactionId}`,
           {
             headers: {
@@ -112,23 +112,30 @@ export class WompiPaymentProvider {
       );
       return response.data;
     } catch (error) {
-      console.error('Error getting transaction status from Wompi:', error);
+      console.error(
+        'Error getting transaction status from Payment Gateway:',
+        error,
+      );
       throw new HttpException(
-        'Error getting transaction status from Wompi',
+        'Error getting transaction status from Payment Gateway',
         HttpStatus.BAD_GATEWAY,
       );
     }
   }
 
-  async getTransactionStatus(transactionId: string, apiUrl: string) {
+  async getEvents(apiUrl: string, privateKey: string): Promise<any> {
     try {
       const response = await firstValueFrom(
-        this.httpService.get(`${apiUrl}/transactions/${transactionId}`),
+        this.httpService.get(`${apiUrl}/events`, {
+          headers: {
+            Authorization: `Bearer ${privateKey}`,
+          },
+        }),
       );
       return response.data;
     } catch {
       throw new HttpException(
-        'Error getting transaction status from Wompi',
+        'Error getting transaction status from Payment Gateway',
         HttpStatus.BAD_GATEWAY,
       );
     }

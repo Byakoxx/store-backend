@@ -1,61 +1,56 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-
-import { WompiPaymentProvider } from 'src/adapters/out/external/wompi/wompi-payment.provider';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PaymentGatewayProvider } from 'src/adapters/out/external/payment/payment-gateway.provider';
 import { TransactionRepository } from 'src/domain/ports-out/transaction.repository';
 import { ProductRepository } from 'src/domain/ports-out/product.repository';
 import { DeliveryRepository } from 'src/domain/ports-out/delivery.repository';
-import { DeliveryStatus } from 'src/domain/models/delivery-status.enum';
+import { TransactionStatus } from 'src/domain/models/transaction-status.enum';
+import { Inject } from '@nestjs/common';
 
 @Injectable()
 export class GetTransactionStatusUseCase {
-  private readonly logger = new Logger(GetTransactionStatusUseCase.name);
-
   constructor(
-    private readonly wompiProvider: WompiPaymentProvider,
     @Inject('TransactionRepository')
     private readonly transactionRepository: TransactionRepository,
+    private readonly paymentProvider: PaymentGatewayProvider,
     @Inject('ProductRepository')
     private readonly productRepository: ProductRepository,
     @Inject('DeliveryRepository')
     private readonly deliveryRepository: DeliveryRepository,
   ) {}
 
-  async execute(wompiTransactionId: string): Promise<string> {
-    // Buscar la transacción local por paymentId (id de wompi)
-    const transaction =
-      await this.transactionRepository.findByPaymentId(wompiTransactionId);
-    if (!transaction) {
-      this.logger.error(
-        `No se encontró transacción local con paymentId ${wompiTransactionId}`,
+  async execute(gatewayTransactionId: string): Promise<string> {
+    // Buscar la transacción local por paymentId (id del gateway)
+    const localTransaction =
+      await this.transactionRepository.findByPaymentId(gatewayTransactionId);
+    if (!localTransaction) {
+      throw new NotFoundException(
+        `No se encontró transacción local con paymentId ${gatewayTransactionId}`,
       );
-      throw new NotFoundException('Transaction not found');
     }
 
-    this.logger.log(
-      `Consultando estado en Wompi para transacción ${wompiTransactionId}`,
+    // Consultar el estado en el gateway de pagos
+    console.log(
+      `Consultando estado en Payment Gateway para transacción ${gatewayTransactionId}`,
     );
-    const wompiStatus = await this.wompiProvider.getTransactionWompiStatus(
-      wompiTransactionId,
-      process.env.WOMPI_API_URL!,
-      process.env.WOMPI_PRIVATE_KEY!,
-    );
-    const status = wompiStatus.data.status;
-
-    this.logger.log(
-      `Actualizando estado en DB para transacción ${transaction.id}: ${status}`,
-    );
-    await this.transactionRepository.updateStatus(transaction.id, status);
-
-    if (status === 'APPROVED' && transaction.items > 0) {
-      await this.productRepository.decreaseStock(
-        transaction.productId,
-        transaction.items,
+    const gatewayStatus =
+      await this.paymentProvider.getTransactionGatewayStatus(
+        gatewayTransactionId,
+        process.env.PAYMENT_API_URL!,
+        process.env.PAYMENT_PRIVATE_KEY!,
       );
+    const status = gatewayStatus.data.status;
 
-      // Cambiar estado del delivery de CREATED a PREPARING
-      await this.deliveryRepository.updateStatus(
-        transaction.id,
-        DeliveryStatus.PREPARING,
+    // Actualizar la transacción local con el nuevo estado
+    await this.transactionRepository.updateStatus(
+      localTransaction.id,
+      status as TransactionStatus,
+    );
+
+    // Si la transacción fue aprobada, reducir el stock del producto
+    if (status === 'APPROVED') {
+      await this.productRepository.decreaseStock(
+        localTransaction.productId,
+        localTransaction.items,
       );
     }
 

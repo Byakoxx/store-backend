@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpService } from '@nestjs/axios';
-import { WompiPaymentProvider } from './wompi-payment.provider';
+import { PaymentGatewayProvider } from './payment-gateway.provider';
 import { of, throwError } from 'rxjs';
 import { HttpException, BadRequestException } from '@nestjs/common';
 
-describe('WompiPaymentProvider', () => {
-  let provider: WompiPaymentProvider;
+describe('PaymentGatewayProvider', () => {
+  let provider: PaymentGatewayProvider;
   let mockHttpService: jest.Mocked<HttpService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        WompiPaymentProvider,
+        PaymentGatewayProvider,
         {
           provide: HttpService,
           useValue: {
@@ -23,7 +23,7 @@ describe('WompiPaymentProvider', () => {
       ],
     }).compile();
 
-    provider = module.get<WompiPaymentProvider>(WompiPaymentProvider);
+    provider = module.get<PaymentGatewayProvider>(PaymentGatewayProvider);
     mockHttpService = module.get(HttpService);
   });
 
@@ -45,14 +45,14 @@ describe('WompiPaymentProvider', () => {
 
       mockHttpService.get.mockReturnValue(of(mockResponse as any));
 
-      process.env.WOMPI_PUBLIC_KEY = 'pub_test_123';
+      process.env.PAYMENT_PUBLIC_KEY = 'pub_test_123';
       const result = await provider.getAcceptanceToken(
-        'https://api.wompi.co/v1',
+        'https://api.payment.co/v1',
       );
 
       expect(result).toBe('test_token_123');
       expect(mockHttpService.get).toHaveBeenCalledWith(
-        'https://api.wompi.co/v1/merchants/pub_test_123',
+        'https://api.payment.co/v1/merchants/pub_test_123',
       );
     });
 
@@ -62,7 +62,7 @@ describe('WompiPaymentProvider', () => {
       );
 
       await expect(
-        provider.getAcceptanceToken('https://api.wompi.co/v1'),
+        provider.getAcceptanceToken('https://api.payment.co/v1'),
       ).rejects.toThrow(HttpException);
     });
   });
@@ -84,13 +84,13 @@ describe('WompiPaymentProvider', () => {
         'test@example.com',
         'token_123',
         'acceptance_token',
-        'https://api.wompi.co/v1',
+        'https://api.payment.co/v1',
         'prv_test_123',
       );
 
       expect(result).toEqual(mockResponse.data);
       expect(mockHttpService.post).toHaveBeenCalledWith(
-        'https://api.wompi.co/v1/payment_sources',
+        'https://api.payment.co/v1/payment_sources',
         {
           customer_email: 'test@example.com',
           type: 'CARD',
@@ -116,7 +116,7 @@ describe('WompiPaymentProvider', () => {
           'test@example.com',
           'token_123',
           'acceptance_token',
-          'https://api.wompi.co/v1',
+          'https://api.payment.co/v1',
           'prv_test_123',
         ),
       ).rejects.toThrow(HttpException);
@@ -145,12 +145,12 @@ describe('WompiPaymentProvider', () => {
       const result = await provider.createTransaction(
         payload,
         'prv_test_123',
-        'https://api.wompi.co/v1',
+        'https://api.payment.co/v1',
       );
 
       expect(result).toEqual(mockResponse.data);
       expect(mockHttpService.post).toHaveBeenCalledWith(
-        'https://api.wompi.co/v1/transactions',
+        'https://api.payment.co/v1/transactions',
         payload,
         {
           headers: {
@@ -180,7 +180,7 @@ describe('WompiPaymentProvider', () => {
         provider.createTransaction(
           {},
           'prv_test_123',
-          'https://api.wompi.co/v1',
+          'https://api.payment.co/v1',
         ),
       ).rejects.toThrow(BadRequestException);
     });
@@ -194,13 +194,13 @@ describe('WompiPaymentProvider', () => {
         provider.createTransaction(
           {},
           'prv_test_123',
-          'https://api.wompi.co/v1',
+          'https://api.payment.co/v1',
         ),
       ).rejects.toThrow(HttpException);
     });
   });
 
-  describe('getTransactionWompiStatus', () => {
+  describe('getTransactionGatewayStatus', () => {
     it('should get transaction status successfully', async () => {
       const mockResponse = {
         data: {
@@ -213,15 +213,15 @@ describe('WompiPaymentProvider', () => {
 
       mockHttpService.get.mockReturnValue(of(mockResponse as any));
 
-      const result = await provider.getTransactionWompiStatus(
+      const result = await provider.getTransactionGatewayStatus(
         'transaction_123',
-        'https://api.wompi.co/v1',
+        'https://api.payment.co/v1',
         'prv_test_123',
       );
 
       expect(result).toEqual(mockResponse.data);
       expect(mockHttpService.get).toHaveBeenCalledWith(
-        'https://api.wompi.co/v1/transactions/transaction_123',
+        'https://api.payment.co/v1/transactions/transaction_123',
         {
           headers: {
             Authorization: 'Bearer prv_test_123',
@@ -236,9 +236,9 @@ describe('WompiPaymentProvider', () => {
       );
 
       await expect(
-        provider.getTransactionWompiStatus(
+        provider.getTransactionGatewayStatus(
           'transaction_123',
-          'https://api.wompi.co/v1',
+          'https://api.payment.co/v1',
           'prv_test_123',
         ),
       ).rejects.toThrow(HttpException);

@@ -8,6 +8,8 @@ import { CreateTransactionDto } from 'src/shared/dto/create-transaction.dto';
 import { Customer } from 'src/domain/models/customer.entity';
 import { Transaction } from 'src/domain/models/transaction.entity';
 import { TransactionStatus } from 'src/domain/models/transaction-status.enum';
+import { ProductRepository } from 'src/domain/ports-out/product.repository';
+import { Product } from 'src/domain/models/product.entity';
 
 // Mock crypto.randomUUID
 global.crypto = {
@@ -20,6 +22,7 @@ describe('CreateTransactionUseCase', () => {
   let mockTransactionRepository: jest.Mocked<TransactionRepository>;
   let mockPaymentProvider: jest.Mocked<PaymentProviderPort>;
   let mockDeliveryRepository: jest.Mocked<DeliveryRepository>;
+  let mockProductRepository: jest.Mocked<ProductRepository>;
 
   const mockCreateTransactionDto: CreateTransactionDto = {
     productId: 'prod-1',
@@ -44,10 +47,10 @@ describe('CreateTransactionUseCase', () => {
   );
 
   beforeEach(async () => {
-    // Reset environment variables
-    process.env.WOMPI_API_URL = 'https://sandbox.wompi.co/v1';
-    process.env.WOMPI_PRIVATE_KEY = 'test_private_key';
-    process.env.WOMPI_INTEGRITY_SIGNATURE = 'test_signature';
+    // Set environment variables
+    process.env.PAYMENT_API_URL = 'https://sandbox.payment.co/v1';
+    process.env.PAYMENT_PRIVATE_KEY = 'test_private_key';
+    process.env.PAYMENT_INTEGRITY_SIGNATURE = 'test_signature';
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -94,6 +97,7 @@ describe('CreateTransactionUseCase', () => {
     mockTransactionRepository = module.get('TransactionRepository');
     mockPaymentProvider = module.get('PaymentProviderPort');
     mockDeliveryRepository = module.get('DeliveryRepository');
+    mockProductRepository = module.get('ProductRepository');
   });
 
   it('should be defined', () => {
@@ -193,5 +197,140 @@ describe('CreateTransactionUseCase', () => {
     // Assert
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(mockCustomerRepository.create).toHaveBeenCalled();
+  });
+
+  it('should create transaction successfully', async () => {
+    // Mock data
+    const customerId = 'customer-123';
+    const transactionId = 'txn-123';
+    const productId = 'product-123';
+
+    const dto: CreateTransactionDto = {
+      customerName: 'John Doe',
+      customerEmail: 'john@example.com',
+      productId,
+      amount: 300000,
+      items: 2,
+      token: 'card_token_123',
+      address: '123 Main St',
+      country: 'Colombia',
+      city: 'Bogotá',
+      zipCode: '110111',
+    };
+
+    const customer = new Customer(
+      customerId,
+      'John Doe',
+      new Date(),
+      new Date(),
+    );
+
+    const product = new Product(
+      productId,
+      'Test Product',
+      'Test Description',
+      150000,
+      10,
+      'image.jpg',
+      new Date(),
+      new Date(),
+    );
+
+    const transaction = new Transaction(
+      transactionId,
+      TransactionStatus.CREATED,
+      300000,
+      null,
+      customerId,
+      productId,
+      new Date(),
+      new Date(),
+      2,
+    );
+
+    const paymentResponse = {
+      data: { id: 'payment-123', status: 'PENDING' },
+    };
+
+    // Mock repository responses
+    mockCustomerRepository.findByName.mockResolvedValue(null);
+    mockCustomerRepository.create.mockResolvedValue(customer);
+    mockTransactionRepository.create.mockResolvedValue(transaction);
+    mockProductRepository.findById.mockResolvedValue(product);
+    mockDeliveryRepository.create.mockResolvedValue({} as any);
+    mockTransactionRepository.updateStatus.mockResolvedValue(transaction);
+
+    // Mock payment provider responses
+    mockPaymentProvider.getAcceptanceToken.mockResolvedValue('acceptance_token_123');
+    mockPaymentProvider.createTransaction.mockResolvedValue(paymentResponse);
+
+    // Execute
+    const result = await useCase.execute(dto);
+
+    // Assertions
+    expect(result).toEqual(transaction);
+    expect(mockCustomerRepository.create).toHaveBeenCalled();
+    expect(mockTransactionRepository.create).toHaveBeenCalled();
+    expect(mockPaymentProvider.createTransaction).toHaveBeenCalled();
+    expect(mockTransactionRepository.updateStatus).toHaveBeenCalledWith(
+      transactionId,
+      TransactionStatus.PENDING,
+      'payment-123',
+    );
+  });
+
+  it('should handle payment provider errors', async () => {
+    const dto: CreateTransactionDto = {
+      customerName: 'John Doe',
+      customerEmail: 'john@example.com',
+      productId: 'product-123',
+      amount: 300000,
+      items: 2,
+      token: 'card_token_123',
+      address: '123 Main St',
+      country: 'Colombia',
+      city: 'Bogotá',
+      zipCode: '110111',
+    };
+
+    const customer = new Customer('customer-123', 'John Doe', new Date(), new Date());
+    const product = new Product(
+      'product-123',
+      'Test Product',
+      'Test Description',
+      150000,
+      10,
+      'image.jpg',
+      new Date(),
+      new Date(),
+    );
+    const transaction = new Transaction(
+      'txn-123',
+      TransactionStatus.CREATED,
+      300000,
+      null,
+      'customer-123',
+      'product-123',
+      new Date(),
+      new Date(),
+      2,
+    );
+
+    const paymentResponse = {
+      data: { id: 'payment-123', status: 'PENDING' },
+    };
+
+    mockCustomerRepository.findByName.mockResolvedValue(null);
+    mockCustomerRepository.create.mockResolvedValue(customer);
+    mockTransactionRepository.create.mockResolvedValue(transaction);
+    mockProductRepository.findById.mockResolvedValue(product);
+    mockPaymentProvider.getAcceptanceToken.mockResolvedValue('acceptance_token_123');
+    mockPaymentProvider.createTransaction.mockResolvedValue(paymentResponse);
+    mockTransactionRepository.updateStatus.mockResolvedValue(transaction);
+    mockDeliveryRepository.create.mockResolvedValue({} as any);
+
+    const result = await useCase.execute(dto);
+
+    expect(result).toEqual(transaction);
   });
 });
