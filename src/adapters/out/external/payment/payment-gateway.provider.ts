@@ -9,8 +9,13 @@ export class PaymentGatewayProvider implements PaymentProviderPort {
 
   async getAcceptanceToken(apiUrl: string): Promise<string> {
     try {
+      const publicKey = process.env.PAYMENT_PUBLIC_KEY;
+      if (!publicKey) {
+        throw new Error('PAYMENT_PUBLIC_KEY environment variable is not set');
+      }
+
       const response = await firstValueFrom(
-        this.httpService.get(`${apiUrl}/merchants/{pub_key}`),
+        this.httpService.get(`${apiUrl}/merchants/${publicKey}`),
       );
       return response.data.data.presigned_acceptance.acceptance_token;
     } catch (error) {

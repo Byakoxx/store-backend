@@ -47,6 +47,7 @@ describe('CreateTransactionUseCase', () => {
     // Set environment variables
     process.env.PAYMENT_API_URL = 'https://sandbox.payment.co/v1';
     process.env.PAYMENT_PRIVATE_KEY = 'test_private_key';
+    process.env.PAYMENT_PUBLIC_KEY = 'test_public_key';
     process.env.PAYMENT_INTEGRITY_SIGNATURE = 'test_signature';
 
     const module: TestingModule = await Test.createTestingModule({

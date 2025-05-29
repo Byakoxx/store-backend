@@ -9,6 +9,10 @@ describe('PaymentGatewayProvider', () => {
   let httpService: HttpService;
 
   beforeEach(async () => {
+    // Set environment variables for tests
+    process.env.PAYMENT_PUBLIC_KEY = 'test_public_key';
+    process.env.PAYMENT_PRIVATE_KEY = 'test_private_key';
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PaymentGatewayProvider,
@@ -48,7 +52,7 @@ describe('PaymentGatewayProvider', () => {
 
       expect(result).toBe('test_token_123');
       expect(httpService.get).toHaveBeenCalledWith(
-        'https://api.test.com/merchants/{pub_key}',
+        'https://api.test.com/merchants/test_public_key',
       );
     });
 
