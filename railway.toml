@@ -5,5 +5,5 @@ dockerfilePath = "Dockerfile"
 [deploy]
 startCommand = "yarn start:prod"
 healthcheckPath = "/health"
-healthcheckTimeout = 300
+healthcheckTimeout = 600
 restartPolicyType = "ON_FAILURE"
