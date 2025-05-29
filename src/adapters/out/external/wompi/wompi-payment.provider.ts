@@ -117,6 +117,12 @@ export class WompiPaymentProvider {
     privateKey: string,
   ): Promise<WompiTransactionStatusDto> {
     try {
+      console.log('getTransactionWompiStatus', {
+        transactionId,
+        apiUrl,
+        privateKey,
+      });
+
       const response = await firstValueFrom(
         this.httpService.get<WompiTransactionStatusDto>(
           `${apiUrl}/transactions/${transactionId}`,

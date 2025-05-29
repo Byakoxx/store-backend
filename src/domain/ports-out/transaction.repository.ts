@@ -9,4 +9,5 @@ export interface TransactionRepository {
     paymentId?: string,
   ): Promise<Transaction | null>;
   findAll(): Promise<Transaction[]>;
+  findByPaymentId(paymentId: string): Promise<Transaction | null>;
 }
