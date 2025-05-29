@@ -9,10 +9,11 @@ import { WompiPaymentProvider } from 'src/adapters/out/external/wompi/wompi-paym
 import { HttpModule } from '@nestjs/axios';
 import { TransactionPollingService } from 'src/application/services/transaction-polling.service';
 import { GetTransactionStatusUseCase } from 'src/application/use-cases/transactions/get-transaction-status.use-case';
+import { WebhookController } from '../controllers/webhook.controller';
 
 @Module({
   imports: [PrismaModule, HttpModule],
-  controllers: [TransactionsController],
+  controllers: [TransactionsController, WebhookController],
   providers: [
     {
       provide: 'TransactionRepository',

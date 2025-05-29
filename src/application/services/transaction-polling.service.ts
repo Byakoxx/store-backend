@@ -17,11 +17,17 @@ export class TransactionPollingService {
   // Ejecuta cada 20 segundos
   @Interval(10000)
   async pollPendingTransactions() {
-    this.logger.log('Iniciando polling de transacciones PENDING...');
+    this.logger.log(
+      'Starting transaction polling to check pending transactions',
+    );
     const pendingTransactions = await this.transactionRepository.findAll();
     const onlyPending = pendingTransactions.filter(
       (t) => t.status === TransactionStatus.PENDING && t.paymentId,
     );
+    if (onlyPending.length === 0) {
+      this.logger.log('No pending transactions to check');
+      return;
+    }
     for (const tx of onlyPending) {
       console.log('tx', tx);
       try {
