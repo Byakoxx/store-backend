@@ -16,6 +16,11 @@ async function bootstrap() {
   // Global validation pipe
   app.useGlobalPipes(new ValidationPipe());
 
+  // Health endpoint before global prefix
+  app.use('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
   // API versioning
   app.setGlobalPrefix('v1');
 
