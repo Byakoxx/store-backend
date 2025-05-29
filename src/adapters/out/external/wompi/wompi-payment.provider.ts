@@ -36,22 +36,6 @@ export class WompiPaymentProvider {
     privateKey: string,
   ): Promise<any> {
     try {
-      console.log('createPaymentSource');
-      console.log({
-        customerEmail,
-        token,
-        acceptanceToken,
-        apiUrl,
-        privateKey,
-      });
-
-      console.log('payload dentro de createPaymentSource', {
-        customer_email: customerEmail,
-        type: 'CARD',
-        token,
-        acceptance_token: acceptanceToken,
-      });
-
       const response = await firstValueFrom(
         this.httpService.post(
           `${apiUrl}/payment_sources`,
@@ -71,7 +55,6 @@ export class WompiPaymentProvider {
       );
       return response.data;
     } catch (error) {
-      console.log('error en createPaymentSource', error.response.data);
       console.error(
         'Error creating payment source in Wompi:',
         error?.response?.data || error,
@@ -117,12 +100,6 @@ export class WompiPaymentProvider {
     privateKey: string,
   ): Promise<WompiTransactionStatusDto> {
     try {
-      console.log('getTransactionWompiStatus', {
-        transactionId,
-        apiUrl,
-        privateKey,
-      });
-
       const response = await firstValueFrom(
         this.httpService.get<WompiTransactionStatusDto>(
           `${apiUrl}/transactions/${transactionId}`,

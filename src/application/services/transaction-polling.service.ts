@@ -29,7 +29,6 @@ export class TransactionPollingService {
       return;
     }
     for (const tx of onlyPending) {
-      console.log('tx', tx);
       try {
         this.logger.log(`Consultando estado de transacción ${tx.paymentId}`);
         await this.getTransactionStatusUseCase.execute(tx.paymentId!);
