@@ -23,10 +23,5 @@ export function generateWompiSignature(
   integritySignature: string = WOMPI_INTEGRITY_SIGNATURE,
 ): string {
   const data = `${reference}${randomTimeOfDay}${amountInCents}COP${integritySignature}`;
-  console.log('data', data);
-  console.log('integritySignature', integritySignature);
-  console.log('randomTimeOfDay', randomTimeOfDay);
-  console.log('amountInCents', amountInCents);
-  console.log('reference', reference);
   return crypto.createHash('sha256').update(data).digest('hex');
 }

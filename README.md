@@ -1,98 +1,255 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🛒 Store Backend API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API backend completa para un e-commerce con integración de pagos Wompi, gestión de productos, transacciones y entregas.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🚀 Características
 
-## Description
+### 🛒 Gestión de Productos
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **GET /v1/products** - Lista todos los productos disponibles
+- **GET /v1/products/:id** - Obtiene un producto específico
+- Base de datos sembrada con productos dummy
+- Control automático de stock
 
-## Project setup
+### 👤 Gestión de Clientes
 
-```bash
-$ yarn install
+- Registro automático de clientes durante transacciones
+- No requiere autenticación previa
+- Asociación con transacciones y entregas
+
+### 💳 Procesamiento de Pagos
+
+- **POST /v1/transactions** - Crear nueva transacción
+- **PATCH /v1/transactions/:id/status** - Actualizar estado
+- **GET /v1/transactions** - Listar transacciones
+- Integración completa con Wompi API
+- Manejo de estados: CREATED → PENDING → APPROVED/DECLINED
+
+### 📦 Gestión de Entregas
+
+- **GET /v1/deliveries/transaction/:transactionId** - Consultar entrega
+- Estados: CREATED → PREPARING → IN_TRANSIT → DELIVERED
+- Información completa de dirección (país, ciudad, dirección, código postal)
+
+### 🔔 Webhooks y Polling
+
+- **POST /v1/webhooks/wompi** - Webhook de confirmación de Wompi
+- Sistema de polling automático para verificar estados
+- Actualización automática de stock al aprobar pagos
+
+## 🏗️ Arquitectura
+
+### Arquitectura Hexagonal (Ports & Adapters)
+
+```
+src/
+├── domain/                 # Entidades y reglas de negocio
+│   ├── models/            # Product, Transaction, Delivery, Customer
+│   └── ports-out/         # Interfaces de repositories
+├── application/           # Casos de uso y servicios
+│   ├── use-cases/        # CreateTransaction, GetProducts, etc.
+│   └── services/         # TransactionPolling, ProductService
+└── adapters/
+    ├── in/               # Controllers HTTP
+    └── out/              # Repositories, External APIs
+        ├── persistence/  # Prisma repositories
+        └── external/     # Wompi integration
 ```
 
-## Compile and run the project
+### Stack Tecnológico
+
+- **Framework:** NestJS + TypeScript
+- **Base de Datos:** PostgreSQL + Prisma ORM
+- **Documentación:** Swagger/OpenAPI
+- **Validación:** Class-validator
+- **Seguridad:** Helmet + CORS
+- **Testing:** Jest
+- **Containerización:** Docker
+
+## ⚙️ Configuración del Proyecto
+
+### Prerrequisitos
+
+- Node.js 18+
+- Docker & Docker Compose
+- Yarn
+
+### 1. Clonar e instalar dependencias
 
 ```bash
-# development
-$ yarn run start
-
-# watch mode
-$ yarn run start:dev
-
-# production mode
-$ yarn run start:prod
+git clone <repository-url>
+cd store-backend
+yarn install
 ```
 
-## Run tests
+### 2. Variables de entorno
+
+Crear archivo `.env`:
+
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/store_db"
+WOMPI_API_URL="https://sandbox.wompi.co/v1"
+WOMPI_PRIVATE_KEY="your_private_key"
+WOMPI_PUBLIC_KEY="your_public_key"
+WOMPI_INTEGRITY_SIGNATURE="your_integrity_signature"
+PORT=3000
+```
+
+### 3. Levantar base de datos
 
 ```bash
-# unit tests
-$ yarn run test
-
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
+docker-compose up -d
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### 4. Ejecutar migraciones y seed
 
 ```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
+npx prisma migrate dev
+yarn seed
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 5. Iniciar aplicación
 
-## Resources
+```bash
+# Desarrollo
+yarn start:dev
 
-Check out a few resources that may come in handy when working with NestJS:
+# Producción
+yarn build
+yarn start:prod
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## 📖 Documentación API
 
-## Support
+### Swagger UI
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Una vez iniciado el servidor, visita:
 
-## Stay in touch
+- **Swagger:** http://localhost:3000/api
+- **API Base:** http://localhost:3000/v1
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### Ejemplos de uso
 
-## License
+#### Crear Transacción
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```bash
+POST /v1/transactions
+Content-Type: application/json
+
+{
+  "productId": "prod-1",
+  "amount": 300000,
+  "currency": "COP",
+  "paymentToken": "tok_test_123",
+  "customer": {
+    "name": "Juan Pérez",
+    "email": "juan@example.com"
+  },
+  "items": 2,
+  "delivery": {
+    "country": "Colombia",
+    "city": "Bogotá",
+    "address": "Calle 123 #45-67",
+    "zipCode": "110111"
+  }
+}
+```
+
+#### Consultar Entrega
+
+```bash
+GET /v1/deliveries/transaction/uuid-transaction-id
+```
+
+## 🧪 Testing
+
+```bash
+# Tests unitarios
+yarn test
+
+# Coverage
+yarn test:cov
+
+# Tests e2e
+yarn test:e2e
+```
+
+## 🔧 Scripts Disponibles
+
+```bash
+yarn start          # Iniciar en producción
+yarn start:dev      # Iniciar en desarrollo (watch mode)
+yarn build          # Compilar proyecto
+yarn test           # Ejecutar tests
+yarn test:cov       # Coverage de tests
+yarn lint           # Linter
+yarn format         # Prettier
+yarn seed           # Seed de base de datos
+```
+
+## 🛡️ Seguridad
+
+- **Helmet:** Headers de seguridad HTTP
+- **CORS:** Configurado para peticiones cross-origin
+- **Validación:** DTOs validados con class-validator
+- **Variables sensibles:** Manejo seguro con .env
+
+## 🌊 Flujo de Negocio
+
+1. **Cliente** hace petición a `POST /v1/transactions`
+2. **Backend** valida datos y crea transacción local
+3. **Wompi** procesa el pago y responde
+4. **Si PENDING:** Se crea delivery en estado `CREATED`
+5. **Polling/Webhook** detecta cambio a `APPROVED`
+6. **Sistema** actualiza delivery a `PREPARING` y reduce stock
+7. **Cliente** puede consultar estado via `GET /v1/deliveries/transaction/:id`
+
+## 🚀 Deployment
+
+### Docker
+
+```bash
+# Build
+docker build -t store-backend .
+
+# Run
+docker run -p 3000:3000 store-backend
+```
+
+### Docker Compose
+
+```bash
+docker-compose up --build
+```
+
+## 📂 Estructura de Base de Datos
+
+### Entidades Principales
+
+- **Product:** productos del catálogo
+- **Customer:** clientes registrados
+- **Transaction:** transacciones de pago
+- **Delivery:** información de entregas
+
+### Relaciones
+
+- Transaction → Customer (many-to-one)
+- Transaction → Product (many-to-one)
+- Delivery → Transaction (one-to-one)
+- Delivery → Customer (many-to-one)
+
+## 🤝 Contribución
+
+1. Fork el proyecto
+2. Crea una rama feature (`git checkout -b feature/nueva-feature`)
+3. Commit tus cambios (`git commit -am 'Add nueva feature'`)
+4. Push a la rama (`git push origin feature/nueva-feature`)
+5. Abre un Pull Request
+
+## 📄 Licencia
+
+Este proyecto está bajo la licencia MIT.
+
+---
+
+**Desarrollado con ❤️ usando NestJS y arquitectura hexagonal**

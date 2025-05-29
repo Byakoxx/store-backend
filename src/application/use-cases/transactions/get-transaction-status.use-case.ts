@@ -3,6 +3,8 @@ import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { WompiPaymentProvider } from 'src/adapters/out/external/wompi/wompi-payment.provider';
 import { TransactionRepository } from 'src/domain/ports-out/transaction.repository';
 import { ProductRepository } from 'src/domain/ports-out/product.repository';
+import { DeliveryRepository } from 'src/domain/ports-out/delivery.repository';
+import { DeliveryStatus } from 'src/domain/models/delivery-status.enum';
 
 @Injectable()
 export class GetTransactionStatusUseCase {
@@ -14,6 +16,8 @@ export class GetTransactionStatusUseCase {
     private readonly transactionRepository: TransactionRepository,
     @Inject('ProductRepository')
     private readonly productRepository: ProductRepository,
+    @Inject('DeliveryRepository')
+    private readonly deliveryRepository: DeliveryRepository,
   ) {}
 
   async execute(wompiTransactionId: string): Promise<string> {
@@ -46,6 +50,12 @@ export class GetTransactionStatusUseCase {
       await this.productRepository.decreaseStock(
         transaction.productId,
         transaction.items,
+      );
+
+      // Cambiar estado del delivery de CREATED a PREPARING
+      await this.deliveryRepository.updateStatus(
+        transaction.id,
+        DeliveryStatus.PREPARING,
       );
     }
 

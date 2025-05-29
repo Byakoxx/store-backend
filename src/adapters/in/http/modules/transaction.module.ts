@@ -11,6 +11,7 @@ import { TransactionPollingService } from 'src/application/services/transaction-
 import { GetTransactionStatusUseCase } from 'src/application/use-cases/transactions/get-transaction-status.use-case';
 import { WebhookController } from '../controllers/webhook.controller';
 import { ProductPrismaRepository } from 'src/adapters/out/persistence/repositories/product.repository';
+import { DeliveryPrismaRepository } from 'src/adapters/out/persistence/repositories/delivery.repository';
 
 @Module({
   imports: [PrismaModule, HttpModule],
@@ -27,6 +28,10 @@ import { ProductPrismaRepository } from 'src/adapters/out/persistence/repositori
     {
       provide: 'PaymentProviderPort',
       useClass: WompiPaymentProvider,
+    },
+    {
+      provide: 'DeliveryRepository',
+      useClass: DeliveryPrismaRepository,
     },
     TransactionPollingService,
     GetTransactionStatusUseCase,

@@ -2,7 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Customer } from 'src/domain/models/customer.entity';
 import { TransactionStatus } from 'src/domain/models/transaction-status.enum';
 import { Transaction } from 'src/domain/models/transaction.entity';
+import { Delivery } from 'src/domain/models/delivery.entity';
+import { DeliveryStatus } from 'src/domain/models/delivery-status.enum';
 import { CustomerRepository } from 'src/domain/ports-out/customer.repository';
+import { DeliveryRepository } from 'src/domain/ports-out/delivery.repository';
 import { PaymentProviderPort } from 'src/domain/ports-out/payment-provider.port';
 import { ProductRepository } from 'src/domain/ports-out/product.repository';
 import { TransactionRepository } from 'src/domain/ports-out/transaction.repository';
@@ -21,6 +24,8 @@ export class CreateTransactionUseCase {
     private readonly paymentProvider: PaymentProviderPort,
     @Inject('ProductRepository')
     private readonly productRepository: ProductRepository,
+    @Inject('DeliveryRepository')
+    private readonly deliveryRepository: DeliveryRepository,
   ) {}
 
   async execute(dto: CreateTransactionDto): Promise<Transaction> {
@@ -52,9 +57,6 @@ export class CreateTransactionUseCase {
       ),
     );
 
-    console.log('transaction', transaction);
-    console.log('dto', dto);
-
     if (!transaction) {
       throw new Error('Error al crear la transacción en la base de datos');
     }
@@ -64,15 +66,9 @@ export class CreateTransactionUseCase {
     const privateKey = process.env.WOMPI_PRIVATE_KEY!;
     const integritySecret = process.env.WOMPI_INTEGRITY_SIGNATURE!;
 
-    console.log('apiUrl', apiUrl);
-    console.log('privateKey', privateKey);
-    console.log('integritySecret', integritySecret);
-
     // 2.1 Obtener acceptance token
     const acceptanceToken =
       await this.paymentProvider.getAcceptanceToken(apiUrl);
-
-    console.log('acceptanceToken despues ✅', acceptanceToken);
 
     // 2.2 Crear payment source
     const paymentSource = await this.paymentProvider.createPaymentSource(
@@ -83,11 +79,7 @@ export class CreateTransactionUseCase {
       privateKey,
     );
 
-    console.log('paymentSource despues ✅', paymentSource);
-
     const paymentSourceId = paymentSource.data.id;
-
-    console.log('paymentSourceId despues ✅', paymentSourceId);
 
     // 2.3 Generar referencia y firma
     const paymentReference =
@@ -98,8 +90,6 @@ export class CreateTransactionUseCase {
       dto.currency,
       integritySecret,
     );
-
-    console.log('signature', signature);
 
     // 2.4 Construir el payload para Wompi
     const payload = {
@@ -114,8 +104,6 @@ export class CreateTransactionUseCase {
       payment_source_id: paymentSourceId,
       acceptance_token: acceptanceToken,
     };
-
-    console.log('payload', payload);
 
     // 2.5 Crear la transacción en Wompi
     const wompiResponse = await this.paymentProvider.createTransaction(
@@ -135,6 +123,28 @@ export class CreateTransactionUseCase {
 
     if (!updatedTransaction) {
       throw new Error('Error al actualizar la transacción en la base de datos');
+    }
+
+    console.log('wompiStatus en create transaction', wompiStatus);
+
+    // 4. Si la transacción de Wompi fue creada y está pendiente, crear el delivery
+    if (wompiStatus === TransactionStatus.PENDING) {
+      // Crear delivery en estado CREATED
+      await this.deliveryRepository.create(
+        new Delivery(
+          crypto.randomUUID(),
+          DeliveryStatus.CREATED,
+          dto.delivery.country,
+          dto.delivery.city,
+          dto.delivery.address,
+          dto.delivery.zipCode,
+          null, // trackingCode se genera después
+          updatedTransaction.id,
+          new Date(),
+          new Date(),
+          customer.id,
+        ),
+      );
     }
 
     return updatedTransaction;
