@@ -10,7 +10,7 @@ export class TransactionPrismaRepository implements TransactionRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(transaction: Transaction): Promise<Transaction> {
-    if (!this.prisma) {
+    if (!process.env.DATABASE_URL) {
       console.log('🔄 Mock transaction create (no database)');
       return transaction;
     }
@@ -33,7 +33,7 @@ export class TransactionPrismaRepository implements TransactionRepository {
   }
 
   async findById(id: string): Promise<Transaction | null> {
-    if (!this.prisma) {
+    if (!process.env.DATABASE_URL) {
       console.log(`🔄 Mock transaction findById ${id} (no database)`);
       return null;
     }
@@ -53,7 +53,7 @@ export class TransactionPrismaRepository implements TransactionRepository {
     status: TransactionStatus,
     paymentId?: string,
   ): Promise<Transaction | null> {
-    if (!this.prisma) {
+    if (!process.env.DATABASE_URL) {
       console.log(
         `🔄 Mock transaction status update ${id} to ${status} (no database)`,
       );
@@ -76,7 +76,7 @@ export class TransactionPrismaRepository implements TransactionRepository {
   }
 
   async findAll(): Promise<Transaction[]> {
-    if (!this.prisma) {
+    if (!process.env.DATABASE_URL) {
       console.log('🔄 Mock all transactions (no database)');
       return [];
     }
@@ -86,7 +86,7 @@ export class TransactionPrismaRepository implements TransactionRepository {
   }
 
   async findByPaymentId(paymentId: string): Promise<Transaction | null> {
-    if (!this.prisma) {
+    if (!process.env.DATABASE_URL) {
       console.log(`🔄 Mock findByPaymentId ${paymentId} (no database)`);
       return null;
     }

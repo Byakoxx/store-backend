@@ -33,7 +33,7 @@ export class ProductPrismaRepository implements ProductRepository {
   }
 
   async findAll(): Promise<Product[]> {
-    if (!this.prisma) {
+    if (!process.env.DATABASE_URL) {
       console.log('🔄 Using mock products (no database)');
       return this.getMockProducts();
     }
@@ -56,7 +56,7 @@ export class ProductPrismaRepository implements ProductRepository {
   }
 
   async findById(id: string): Promise<Product | null> {
-    if (!this.prisma) {
+    if (!process.env.DATABASE_URL) {
       console.log(`🔄 Using mock product for ID ${id} (no database)`);
       const mockProducts = this.getMockProducts();
       return mockProducts.find((p) => p.id === id) || null;
@@ -78,7 +78,7 @@ export class ProductPrismaRepository implements ProductRepository {
   }
 
   async decreaseStock(productId: string, quantity: number): Promise<void> {
-    if (!this.prisma) {
+    if (!process.env.DATABASE_URL) {
       console.log(
         `🔄 Mock decrease stock for product ${productId} by ${quantity} (no database)`,
       );
