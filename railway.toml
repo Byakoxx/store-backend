@@ -1,8 +1,8 @@
 [build]
-buildCommand = "npm run build"
+buildCommand = "yarn install && yarn build"
 
 [deploy]
-startCommand = "npm run start:prod"
+startCommand = "yarn start:prod"
 
 [[services]]
 name = "store-backend"
