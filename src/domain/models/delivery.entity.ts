@@ -7,6 +7,6 @@ export class Delivery {
     public transactionId: string,
     public createdAt: Date,
     public updatedAt: Date,
-    public customerId?: string,
+    public customerId: string,
   ) {}
 }
