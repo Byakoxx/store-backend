@@ -1,8 +1,8 @@
 import { Controller, Get, Inject, Param } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ProductService } from 'src/application/ports-in/product-service-interface';
-import { toProductResponseDto } from 'src/shared/dto/product-mapper';
-import { ProductResponseDto } from 'src/shared/dto/product-response.dto';
+import { ProductService } from '../../../../application/ports-in/product-service-interface';
+import { toProductResponseDto } from '../../../../shared/dto/product-mapper';
+import { ProductResponseDto } from '../../../../shared/dto/product-response.dto';
 
 @Controller('products')
 export class ProductsController {
