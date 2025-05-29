@@ -26,6 +26,7 @@ describe('TransactionPrismaRepository', () => {
         create: jest.fn(),
         findMany: jest.fn(),
         findUnique: jest.fn(),
+        findFirst: jest.fn(),
         update: jest.fn(),
       },
     };
@@ -101,7 +102,7 @@ describe('TransactionPrismaRepository', () => {
 
   describe('findByPaymentId', () => {
     it('should return a transaction when found', async () => {
-      mockPrismaService.transaction.findUnique.mockResolvedValue(
+      mockPrismaService.transaction.findFirst.mockResolvedValue(
         mockPrismaTransaction,
       );
 
@@ -109,18 +110,18 @@ describe('TransactionPrismaRepository', () => {
 
       expect(result).toBeInstanceOf(Transaction);
       expect(result?.paymentId).toBe('payment-123');
-      expect(mockPrismaService.transaction.findUnique).toHaveBeenCalledWith({
+      expect(mockPrismaService.transaction.findFirst).toHaveBeenCalledWith({
         where: { paymentId: 'payment-123' },
       });
     });
 
     it('should return null when transaction not found', async () => {
-      mockPrismaService.transaction.findUnique.mockResolvedValue(null);
+      mockPrismaService.transaction.findFirst.mockResolvedValue(null);
 
       const result = await repository.findByPaymentId('non-existent');
 
       expect(result).toBeNull();
-      expect(mockPrismaService.transaction.findUnique).toHaveBeenCalledWith({
+      expect(mockPrismaService.transaction.findFirst).toHaveBeenCalledWith({
         where: { paymentId: 'non-existent' },
       });
     });
@@ -132,6 +133,11 @@ describe('TransactionPrismaRepository', () => {
         ...mockPrismaTransaction,
         status: 'APPROVED',
       };
+
+      // Mock that transaction exists
+      mockPrismaService.transaction.findUnique.mockResolvedValue(
+        mockPrismaTransaction,
+      );
       mockPrismaService.transaction.update.mockResolvedValue(
         updatedTransaction,
       );
@@ -144,9 +150,16 @@ describe('TransactionPrismaRepository', () => {
 
       expect(result).toBeInstanceOf(Transaction);
       expect(result?.status).toBe(TransactionStatus.APPROVED);
+      expect(mockPrismaService.transaction.findUnique).toHaveBeenCalledWith({
+        where: { id: 'txn-1' },
+      });
       expect(mockPrismaService.transaction.update).toHaveBeenCalledWith({
         where: { id: 'txn-1' },
-        data: { status: TransactionStatus.APPROVED, paymentId: 'payment-123' },
+        data: {
+          status: TransactionStatus.APPROVED,
+          paymentId: 'payment-123',
+          updatedAt: expect.any(Date),
+        },
       });
     });
 
@@ -155,6 +168,10 @@ describe('TransactionPrismaRepository', () => {
         ...mockPrismaTransaction,
         status: 'DECLINED',
       };
+
+      mockPrismaService.transaction.findUnique.mockResolvedValue(
+        mockPrismaTransaction,
+      );
       mockPrismaService.transaction.update.mockResolvedValue(
         updatedTransaction,
       );
@@ -167,7 +184,11 @@ describe('TransactionPrismaRepository', () => {
       expect(result).toBeInstanceOf(Transaction);
       expect(mockPrismaService.transaction.update).toHaveBeenCalledWith({
         where: { id: 'txn-1' },
-        data: { status: TransactionStatus.DECLINED, paymentId: undefined },
+        data: {
+          status: TransactionStatus.DECLINED,
+          paymentId: undefined,
+          updatedAt: expect.any(Date),
+        },
       });
     });
   });
