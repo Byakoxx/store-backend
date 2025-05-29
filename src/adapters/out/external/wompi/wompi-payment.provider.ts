@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import { WompiTransactionStatusDto } from 'src/adapters/wompi/dtos/wompi-transaction-status.dto';
+import { WompiTransactionStatusDto } from 'src/shared/dto/wompi-transaction-status.dto';
 
 @Injectable()
 export class WompiPaymentProvider {
