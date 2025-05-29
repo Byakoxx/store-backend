@@ -206,16 +206,21 @@ describe('CreateTransactionUseCase', () => {
     const productId = 'product-123';
 
     const dto: CreateTransactionDto = {
-      customerName: 'John Doe',
-      customerEmail: 'john@example.com',
+      customer: {
+        name: 'John Doe',
+        email: 'john@example.com',
+      },
       productId,
       amount: 300000,
       items: 2,
-      token: 'card_token_123',
-      address: '123 Main St',
-      country: 'Colombia',
-      city: 'Bogotá',
-      zipCode: '110111',
+      paymentToken: 'card_token_123',
+      delivery: {
+        country: 'Colombia',
+        city: 'Bogotá',
+        address: '123 Main St',
+        zipCode: '110111',
+      },
+      currency: 'COP',
     };
 
     const customer = new Customer(
