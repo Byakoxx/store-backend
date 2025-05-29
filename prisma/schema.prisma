@@ -46,6 +46,7 @@ model Transaction {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   delivery    Delivery?
+  items       Int @default(1)
 }
 
 model Delivery {

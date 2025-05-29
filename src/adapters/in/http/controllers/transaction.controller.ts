@@ -26,10 +26,10 @@ export class TransactionsController {
   ) {}
 
   @Post()
-  @ApiOperation({ summary: 'Crear una transacción' })
+  @ApiOperation({ summary: 'Create a transaction' })
   @ApiResponse({
     status: 201,
-    description: 'Transacción creada',
+    description: 'Transaction created',
     type: Transaction,
   })
   async create(@Body() dto: CreateTransactionDto): Promise<Transaction> {

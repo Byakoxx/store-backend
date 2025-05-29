@@ -5,10 +5,16 @@ import { CreateTransactionUseCase } from 'src/application/use-cases/create-trans
 import { TransactionsController } from '../controllers/transaction.controller';
 import { CustomerPrismaRepository } from 'src/adapters/out/persistence/repositories/customer.repository';
 import { UpdateTransactionStatusUseCase } from 'src/application/use-cases/update-transaction-status.use-case';
+import { WompiPaymentProvider } from 'src/adapters/out/external/wompi/wompi-payment.provider';
+import { HttpModule } from '@nestjs/axios';
+import { TransactionPollingService } from 'src/application/services/transaction-polling.service';
+import { GetTransactionStatusUseCase } from 'src/application/use-cases/transactions/get-transaction-status.use-case';
+import { WebhookController } from '../controllers/webhook.controller';
+import { ProductPrismaRepository } from 'src/adapters/out/persistence/repositories/product.repository';
 
 @Module({
-  imports: [PrismaModule],
-  controllers: [TransactionsController],
+  imports: [PrismaModule, HttpModule],
+  controllers: [TransactionsController, WebhookController],
   providers: [
     {
       provide: 'TransactionRepository',
@@ -18,8 +24,19 @@ import { UpdateTransactionStatusUseCase } from 'src/application/use-cases/update
       provide: 'CustomerRepository',
       useClass: CustomerPrismaRepository,
     },
+    {
+      provide: 'PaymentProviderPort',
+      useClass: WompiPaymentProvider,
+    },
+    TransactionPollingService,
+    GetTransactionStatusUseCase,
+    WompiPaymentProvider,
     CreateTransactionUseCase,
     UpdateTransactionStatusUseCase,
+    {
+      provide: 'ProductRepository',
+      useClass: ProductPrismaRepository,
+    },
   ],
   exports: ['TransactionRepository'],
 })

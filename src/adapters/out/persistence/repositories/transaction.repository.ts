@@ -19,6 +19,7 @@ export class TransactionPrismaRepository implements TransactionRepository {
         productId: transaction.productId,
         createdAt: transaction.createdAt,
         updatedAt: transaction.updatedAt,
+        items: transaction.items,
       },
     });
 
@@ -57,6 +58,11 @@ export class TransactionPrismaRepository implements TransactionRepository {
     const transactions = await this.prisma.transaction.findMany();
     return transactions.map((t) => this.toDomain(t));
   }
+  async findByPaymentId(paymentId: string): Promise<Transaction | null> {
+    const t = await this.prisma.transaction.findFirst({ where: { paymentId } });
+    if (!t) return null;
+    return this.toDomain(t);
+  }
 
   private toDomain(t: PrismaTransaction): Transaction {
     return new Transaction(
@@ -68,6 +74,7 @@ export class TransactionPrismaRepository implements TransactionRepository {
       t.productId,
       t.createdAt,
       t.updatedAt,
+      t.items,
     );
   }
 }
