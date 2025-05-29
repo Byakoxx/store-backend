@@ -1,11 +1,13 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Inject } from '@nestjs/common';
 import { TransactionRepository } from 'src/domain/ports-out/transaction.repository';
 import { ProductRepository } from 'src/domain/ports-out/product.repository';
 
 @Controller('webhooks/payment')
 export class WebhookController {
   constructor(
+    @Inject('TransactionRepository')
     private readonly transactionRepository: TransactionRepository,
+    @Inject('ProductRepository')
     private readonly productRepository: ProductRepository,
   ) {}
 

@@ -114,6 +114,7 @@ NODE_ENV=production
 ### 5. Primera migración
 
 Railway ejecutará automáticamente:
+
 ```bash
 npm run build
 npx prisma migrate deploy
@@ -204,7 +205,7 @@ npm run format         # Prettier
 
 ## 🌟 Características Técnicas
 
-- **Cobertura de Tests:** 85%+ 
+- **Cobertura de Tests:** 85%+
 - **Arquitectura Hexagonal** con puertos y adaptadores
 - **Inyección de Dependencias** con NestJS
 - **Validación de DTOs** automática

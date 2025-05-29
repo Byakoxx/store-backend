@@ -8,8 +8,6 @@ import { CreateTransactionDto } from 'src/shared/dto/create-transaction.dto';
 import { Customer } from 'src/domain/models/customer.entity';
 import { Transaction } from 'src/domain/models/transaction.entity';
 import { TransactionStatus } from 'src/domain/models/transaction-status.enum';
-import { ProductRepository } from 'src/domain/ports-out/product.repository';
-import { Product } from 'src/domain/models/product.entity';
 
 // Mock crypto.randomUUID
 global.crypto = {
@@ -22,7 +20,6 @@ describe('CreateTransactionUseCase', () => {
   let mockTransactionRepository: jest.Mocked<TransactionRepository>;
   let mockPaymentProvider: jest.Mocked<PaymentProviderPort>;
   let mockDeliveryRepository: jest.Mocked<DeliveryRepository>;
-  let mockProductRepository: jest.Mocked<ProductRepository>;
 
   const mockCreateTransactionDto: CreateTransactionDto = {
     productId: 'prod-1',
@@ -70,17 +67,11 @@ describe('CreateTransactionUseCase', () => {
           },
         },
         {
-          provide: 'PaymentProviderPort',
+          provide: 'PaymentProvider',
           useValue: {
             getAcceptanceToken: jest.fn(),
             createPaymentSource: jest.fn(),
             createTransaction: jest.fn(),
-          },
-        },
-        {
-          provide: 'ProductRepository',
-          useValue: {
-            decreaseStock: jest.fn(),
           },
         },
         {
@@ -95,9 +86,8 @@ describe('CreateTransactionUseCase', () => {
     useCase = module.get<CreateTransactionUseCase>(CreateTransactionUseCase);
     mockCustomerRepository = module.get('CustomerRepository');
     mockTransactionRepository = module.get('TransactionRepository');
-    mockPaymentProvider = module.get('PaymentProviderPort');
+    mockPaymentProvider = module.get('PaymentProvider');
     mockDeliveryRepository = module.get('DeliveryRepository');
-    mockProductRepository = module.get('ProductRepository');
   });
 
   it('should be defined', () => {
@@ -122,7 +112,7 @@ describe('CreateTransactionUseCase', () => {
       'mock-uuid',
       TransactionStatus.PENDING,
       300000,
-      'wompi-123',
+      'payment-123',
       'customer-1',
       'prod-1',
       new Date(),
@@ -139,7 +129,7 @@ describe('CreateTransactionUseCase', () => {
       data: { id: 'payment-source-id' },
     });
     mockPaymentProvider.createTransaction.mockResolvedValue({
-      data: { id: 'wompi-123', status: 'PENDING' },
+      data: { id: 'payment-123', status: 'PENDING' },
     });
     mockTransactionRepository.updateStatus.mockResolvedValue(
       mockUpdatedTransaction,
@@ -186,7 +176,7 @@ describe('CreateTransactionUseCase', () => {
       data: { id: 'payment-source-id' },
     });
     mockPaymentProvider.createTransaction.mockResolvedValue({
-      data: { id: 'wompi-123', status: 'PENDING' },
+      data: { id: 'payment-123', status: 'PENDING' },
     });
     mockTransactionRepository.updateStatus.mockResolvedValue(mockTransaction);
     mockDeliveryRepository.create.mockResolvedValue({} as any);
@@ -230,17 +220,6 @@ describe('CreateTransactionUseCase', () => {
       new Date(),
     );
 
-    const product = new Product(
-      productId,
-      'Test Product',
-      'Test Description',
-      150000,
-      10,
-      'image.jpg',
-      new Date(),
-      new Date(),
-    );
-
     const transaction = new Transaction(
       transactionId,
       TransactionStatus.CREATED,
@@ -258,15 +237,19 @@ describe('CreateTransactionUseCase', () => {
     };
 
     // Mock repository responses
-    mockCustomerRepository.findByName.mockResolvedValue(null);
+    mockCustomerRepository.findBy.mockResolvedValue(null);
     mockCustomerRepository.create.mockResolvedValue(customer);
     mockTransactionRepository.create.mockResolvedValue(transaction);
-    mockProductRepository.findById.mockResolvedValue(product);
     mockDeliveryRepository.create.mockResolvedValue({} as any);
     mockTransactionRepository.updateStatus.mockResolvedValue(transaction);
 
     // Mock payment provider responses
-    mockPaymentProvider.getAcceptanceToken.mockResolvedValue('acceptance_token_123');
+    mockPaymentProvider.getAcceptanceToken.mockResolvedValue(
+      'acceptance_token_123',
+    );
+    mockPaymentProvider.createPaymentSource.mockResolvedValue({
+      data: { id: 'payment-source-id' },
+    });
     mockPaymentProvider.createTransaction.mockResolvedValue(paymentResponse);
 
     // Execute
@@ -274,9 +257,13 @@ describe('CreateTransactionUseCase', () => {
 
     // Assertions
     expect(result).toEqual(transaction);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(mockCustomerRepository.create).toHaveBeenCalled();
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(mockTransactionRepository.create).toHaveBeenCalled();
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(mockPaymentProvider.createTransaction).toHaveBeenCalled();
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(mockTransactionRepository.updateStatus).toHaveBeenCalledWith(
       transactionId,
       TransactionStatus.PENDING,
@@ -286,26 +273,26 @@ describe('CreateTransactionUseCase', () => {
 
   it('should handle payment provider errors', async () => {
     const dto: CreateTransactionDto = {
-      customerName: 'John Doe',
-      customerEmail: 'john@example.com',
+      customer: {
+        name: 'John Doe',
+        email: 'john@example.com',
+      },
       productId: 'product-123',
       amount: 300000,
       items: 2,
-      token: 'card_token_123',
-      address: '123 Main St',
-      country: 'Colombia',
-      city: 'Bogotá',
-      zipCode: '110111',
+      paymentToken: 'card_token_123',
+      delivery: {
+        country: 'Colombia',
+        city: 'Bogotá',
+        address: '123 Main St',
+        zipCode: '110111',
+      },
+      currency: 'COP',
     };
 
-    const customer = new Customer('customer-123', 'John Doe', new Date(), new Date());
-    const product = new Product(
-      'product-123',
-      'Test Product',
-      'Test Description',
-      150000,
-      10,
-      'image.jpg',
+    const customer = new Customer(
+      'customer-123',
+      'John Doe',
       new Date(),
       new Date(),
     );
@@ -325,11 +312,15 @@ describe('CreateTransactionUseCase', () => {
       data: { id: 'payment-123', status: 'PENDING' },
     };
 
-    mockCustomerRepository.findByName.mockResolvedValue(null);
+    mockCustomerRepository.findBy.mockResolvedValue(null);
     mockCustomerRepository.create.mockResolvedValue(customer);
     mockTransactionRepository.create.mockResolvedValue(transaction);
-    mockProductRepository.findById.mockResolvedValue(product);
-    mockPaymentProvider.getAcceptanceToken.mockResolvedValue('acceptance_token_123');
+    mockPaymentProvider.getAcceptanceToken.mockResolvedValue(
+      'acceptance_token_123',
+    );
+    mockPaymentProvider.createPaymentSource.mockResolvedValue({
+      data: { id: 'payment-source-id' },
+    });
     mockPaymentProvider.createTransaction.mockResolvedValue(paymentResponse);
     mockTransactionRepository.updateStatus.mockResolvedValue(transaction);
     mockDeliveryRepository.create.mockResolvedValue({} as any);
