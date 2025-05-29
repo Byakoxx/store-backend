@@ -4,7 +4,7 @@ export class CreateTransactionDto {
   @ApiProperty({ example: 'prod-1' })
   productId: string;
 
-  @ApiProperty({ example: 1999 })
+  @ApiProperty({ example: 300000 })
   amount: number;
 
   @ApiProperty({ example: 'COP' })

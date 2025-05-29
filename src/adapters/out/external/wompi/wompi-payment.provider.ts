@@ -1,4 +1,9 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  HttpException,
+  HttpStatus,
+  BadRequestException,
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { WompiTransactionStatusDto } from 'src/adapters/wompi/dtos/wompi-transaction-status.dto';
@@ -31,6 +36,22 @@ export class WompiPaymentProvider {
     privateKey: string,
   ): Promise<any> {
     try {
+      console.log('createPaymentSource');
+      console.log({
+        customerEmail,
+        token,
+        acceptanceToken,
+        apiUrl,
+        privateKey,
+      });
+
+      console.log('payload dentro de createPaymentSource', {
+        customer_email: customerEmail,
+        type: 'CARD',
+        token,
+        acceptance_token: acceptanceToken,
+      });
+
       const response = await firstValueFrom(
         this.httpService.post(
           `${apiUrl}/payment_sources`,
@@ -50,6 +71,7 @@ export class WompiPaymentProvider {
       );
       return response.data;
     } catch (error) {
+      console.log('error en createPaymentSource', error.response.data);
       console.error(
         'Error creating payment source in Wompi:',
         error?.response?.data || error,
@@ -73,30 +95,15 @@ export class WompiPaymentProvider {
       );
       return response.data;
     } catch (error) {
-      if (error.response && error.response.data && error.response.data.error) {
-        console.log('error creating transaction in Wompi', error.response.data);
-        console.log(
-          'error creating transaction in Wompi',
-          error.response.status,
-        );
-        if (
-          error.response.data.error.messages &&
-          error.response.data.error.messages.signature &&
-          error.response.data.error.messages.signature[0]
-        ) {
-          console.log(
-            'error creating transaction in Wompi',
-            error.response.data.error.messages.signature[0],
-          );
-        } else {
-          console.log(
-            'error creating transaction in Wompi',
-            error.response.data.error.messages,
-          );
-        }
-      } else {
-        console.log('error creating transaction in Wompi', error);
+      if (
+        error.response &&
+        error.response.status === 422 &&
+        error.response.data?.error?.type === 'INPUT_VALIDATION_ERROR'
+      ) {
+        // Error de validación de datos de usuario
+        throw new BadRequestException(error.response.data.error.messages);
       }
+      // Otros errores (por ejemplo, problemas de red, gateway, etc.)
       throw new HttpException(
         'Error creating transaction in Wompi',
         HttpStatus.BAD_GATEWAY,

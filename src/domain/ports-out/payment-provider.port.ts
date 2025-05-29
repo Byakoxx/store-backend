@@ -7,4 +7,11 @@ export interface PaymentProviderPort {
     apiUrl: string,
   ): Promise<any>;
   getTransactionStatus(transactionId: string, apiUrl: string): Promise<any>;
+  createPaymentSource(
+    customerEmail: string,
+    token: string,
+    acceptanceToken: string,
+    apiUrl: string,
+    privateKey: string,
+  ): Promise<any>;
 }

@@ -5,9 +5,11 @@ import { CreateTransactionUseCase } from 'src/application/use-cases/create-trans
 import { TransactionsController } from '../controllers/transaction.controller';
 import { CustomerPrismaRepository } from 'src/adapters/out/persistence/repositories/customer.repository';
 import { UpdateTransactionStatusUseCase } from 'src/application/use-cases/update-transaction-status.use-case';
+import { WompiPaymentProvider } from 'src/adapters/out/external/wompi/wompi-payment.provider';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, HttpModule],
   controllers: [TransactionsController],
   providers: [
     {
@@ -18,6 +20,11 @@ import { UpdateTransactionStatusUseCase } from 'src/application/use-cases/update
       provide: 'CustomerRepository',
       useClass: CustomerPrismaRepository,
     },
+    {
+      provide: 'PaymentProviderPort',
+      useClass: WompiPaymentProvider,
+    },
+    WompiPaymentProvider,
     CreateTransactionUseCase,
     UpdateTransactionStatusUseCase,
   ],
