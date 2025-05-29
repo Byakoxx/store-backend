@@ -1,11 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ProductRepository } from 'src/domain/ports-out/product.repository';
 import { ProductService } from '../ports-in/product-service-interface';
 import { Product } from 'src/domain/models/product.entity';
 
 @Injectable()
 export class ProductServiceImpl implements ProductService {
-  constructor(private readonly productRepository: ProductRepository) {}
+  constructor(
+    @Inject('ProductRepository')
+    private readonly productRepository: ProductRepository,
+  ) {}
 
   async getAll(): Promise<Product[]> {
     return this.productRepository.findAll();

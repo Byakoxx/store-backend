@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { ProductModule } from './adapters/in/http/modules/product.module';
+
 @Module({
-  imports: [],
+  imports: [ProductModule],
   controllers: [],
   providers: [],
 })
