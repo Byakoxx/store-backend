@@ -50,6 +50,10 @@ export class PaymentGatewayProvider implements PaymentProviderPort {
         privateKey?.includes('\n'),
       );
 
+      // CLEAN the privateKey by removing newlines and spaces
+      const cleanPrivateKey = privateKey?.replace(/[\n\r\s]/g, '');
+      console.log('🧹 CLEANED privateKey length:', cleanPrivateKey?.length);
+
       const payload = {
         type: 'CARD',
         token: token,
@@ -60,7 +64,7 @@ export class PaymentGatewayProvider implements PaymentProviderPort {
       const response = await firstValueFrom(
         this.httpService.post(`${apiUrl}/payment_sources`, payload, {
           headers: {
-            Authorization: `Bearer ${privateKey}`,
+            Authorization: `Bearer ${cleanPrivateKey}`,
             'Content-Type': 'application/json',
           },
         }),
@@ -82,10 +86,13 @@ export class PaymentGatewayProvider implements PaymentProviderPort {
     apiUrl: string,
   ): Promise<any> {
     try {
+      // CLEAN the privateKey by removing newlines and spaces
+      const cleanPrivateKey = privateKey?.replace(/[\n\r\s]/g, '');
+
       const response = await firstValueFrom(
         this.httpService.post(`${apiUrl}/transactions`, payload, {
           headers: {
-            Authorization: `Bearer ${privateKey}`,
+            Authorization: `Bearer ${cleanPrivateKey}`,
             'Content-Type': 'application/json',
           },
         }),
