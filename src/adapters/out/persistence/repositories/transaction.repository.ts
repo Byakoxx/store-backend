@@ -53,6 +53,10 @@ export class TransactionPrismaRepository implements TransactionRepository {
     });
     return t ? this.toDomain(t) : null;
   }
+  async findAll(): Promise<Transaction[]> {
+    const transactions = await this.prisma.transaction.findMany();
+    return transactions.map((t) => this.toDomain(t));
+  }
 
   private toDomain(t: PrismaTransaction): Transaction {
     return new Transaction(
