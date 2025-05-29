@@ -1,0 +1,8 @@
+[build]
+buildCommand = "npm run build"
+
+[deploy]
+startCommand = "npm run start:prod"
+
+[[services]]
+name = "store-backend"

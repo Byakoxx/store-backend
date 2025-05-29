@@ -1,132 +1,138 @@
-# 🛒 Store Backend API
+# 🛒 Store Backend
 
-API backend completa para un e-commerce con integración de pagos Wompi, gestión de productos, transacciones y entregas.
+API backend completa para un e-commerce con integración de pagos Gateway, gestión de productos, transacciones y entregas.
 
 ## 🚀 Características
 
-### 🛒 Gestión de Productos
+- **Arquitectura Hexagonal** - Clean Architecture con separación clara de responsabilidades
+- **NestJS Framework** - Framework Node.js escalable y mantenible
+- **Prisma ORM** - Base de datos type-safe con PostgreSQL
+- **Docker Ready** - Containerización completa
+- **Testing** - Cobertura de tests unitarios
+- **ESLint + Prettier** - Código limpio y consistente
+- **TypeScript** - Tipado estático para mayor robustez
 
-- **GET /v1/products** - Lista todos los productos disponibles
-- **GET /v1/products/:id** - Obtiene un producto específico
-- Base de datos sembrada con productos dummy
-- Control automático de stock
+## 📋 Funcionalidades
 
-### 👤 Gestión de Clientes
+### 🛍️ Productos
 
-- Registro automático de clientes durante transacciones
-- No requiere autenticación previa
-- Asociación con transacciones y entregas
+- **GET /v1/products** - Listar productos disponibles
+- **GET /v1/products/:id** - Obtener producto específico
+- Gestión automática de stock
 
-### 💳 Procesamiento de Pagos
+### 💳 Transacciones
 
 - **POST /v1/transactions** - Crear nueva transacción
 - **PATCH /v1/transactions/:id/status** - Actualizar estado
 - **GET /v1/transactions** - Listar transacciones
-- Integración completa con Wompi API
+- Integración completa con Payment Gateway API
 - Manejo de estados: CREATED → PENDING → APPROVED/DECLINED
 
-### 📦 Gestión de Entregas
+### 🚚 Entregas
 
-- **GET /v1/deliveries/transaction/:transactionId** - Consultar entrega
+- **GET /v1/deliveries/transaction/:id** - Consultar entrega por transacción
 - Estados: CREATED → PREPARING → IN_TRANSIT → DELIVERED
-- Información completa de dirección (país, ciudad, dirección, código postal)
+- Asociación automática con transacciones aprobadas
 
-### 🔔 Webhooks y Polling
+### 🎣 Webhooks
 
-- **POST /v1/webhooks/wompi** - Webhook de confirmación de Wompi
-- Sistema de polling automático para verificar estados
-- Actualización automática de stock al aprobar pagos
+- **POST /v1/webhooks/payment** - Webhook de confirmación del Gateway
 
 ## 🏗️ Arquitectura
 
-### Arquitectura Hexagonal (Ports & Adapters)
-
 ```
 src/
-├── domain/                 # Entidades y reglas de negocio
-│   ├── models/            # Product, Transaction, Delivery, Customer
-│   └── ports-out/         # Interfaces de repositories
-├── application/           # Casos de uso y servicios
-│   ├── use-cases/        # CreateTransaction, GetProducts, etc.
-│   └── services/         # TransactionPolling, ProductService
-└── adapters/
-    ├── in/               # Controllers HTTP
-    └── out/              # Repositories, External APIs
-        ├── persistence/  # Prisma repositories
-        └── external/     # Wompi integration
+├── adapters/
+│   ├── in/http/         # Controllers y DTOs
+│   └── out/
+│       ├── persistence/ # Repositories con Prisma
+│       └── external/    # Payment Gateway integration
+├── application/         # Use cases y servicios
+├── domain/             # Entidades y puertos
+└── shared/             # Utilidades compartidas
 ```
 
-### Stack Tecnológico
+## ⚙️ Configuración
 
-- **Framework:** NestJS + TypeScript
-- **Base de Datos:** PostgreSQL + Prisma ORM
-- **Documentación:** Swagger/OpenAPI
-- **Validación:** Class-validator
-- **Seguridad:** Helmet + CORS
-- **Testing:** Jest
-- **Containerización:** Docker
-
-## ⚙️ Configuración del Proyecto
-
-### Prerrequisitos
-
-- Node.js 18+
-- Docker & Docker Compose
-- Yarn
-
-### 1. Clonar e instalar dependencias
+### Variables de Entorno
 
 ```bash
-git clone <repository-url>
-cd store-backend
-yarn install
-```
+# Base de datos
+DATABASE_URL="postgresql://user:password@localhost:5432/store"
 
-### 2. Variables de entorno
+# Gateway de Pagos
+PAYMENT_API_URL="https://sandbox.payment.co/v1"
+PAYMENT_PRIVATE_KEY="your_private_key"
+PAYMENT_PUBLIC_KEY="your_public_key"
+PAYMENT_INTEGRITY_SIGNATURE="your_integrity_signature"
 
-Crear archivo `.env`:
-
-```env
-DATABASE_URL="postgresql://user:password@localhost:5432/store_db"
-WOMPI_API_URL="https://sandbox.wompi.co/v1"
-WOMPI_PRIVATE_KEY="your_private_key"
-WOMPI_PUBLIC_KEY="your_public_key"
-WOMPI_INTEGRITY_SIGNATURE="your_integrity_signature"
+# Servidor
 PORT=3000
+NODE_ENV=development
 ```
 
-### 3. Levantar base de datos
+## 🚀 Despliegue en Railway
+
+### 1. Preparar el repositorio
 
 ```bash
-docker-compose up -d
+# Asegúrate de que todos los cambios estén commiteados
+git add .
+git commit -m "Prepare for Railway deployment"
+git push origin main
 ```
 
-### 4. Ejecutar migraciones y seed
+### 2. Desplegar en Railway
+
+1. Ve a [railway.app](https://railway.app)
+2. Haz clic en "Start a New Project"
+3. Selecciona "Deploy from GitHub repo"
+4. Autoriza Railway a acceder a tu repositorio
+5. Selecciona tu repositorio `store-backend`
+6. Railway detectará automáticamente que es una aplicación Node.js
+
+### 3. Configurar PostgreSQL
+
+1. En tu proyecto Railway, haz clic en "New Service"
+2. Selecciona "Database" → "PostgreSQL"
+3. Railway creará automáticamente la base de datos
+4. Copia la `DATABASE_URL` que aparece en las variables de entorno
+
+### 4. Configurar Variables de Entorno
+
+En Railway, ve a tu servicio backend → Variables y agrega:
+
+```
+DATABASE_URL=postgresql://... (la que te dio Railway)
+PAYMENT_API_URL=https://sandbox.payment.co/v1
+PAYMENT_PRIVATE_KEY=tu_clave_privada
+PAYMENT_PUBLIC_KEY=tu_clave_publica
+PAYMENT_INTEGRITY_SIGNATURE=tu_firma_integridad
+NODE_ENV=production
+```
+
+### 5. Primera migración
+
+Railway ejecutará automáticamente:
 
 ```bash
-npx prisma migrate dev
-yarn seed
+npm run build
+npx prisma migrate deploy
+npm start
 ```
 
-### 5. Iniciar aplicación
+### 6. URL de tu API
 
-```bash
-# Desarrollo
-yarn start:dev
-
-# Producción
-yarn build
-yarn start:prod
-```
+Railway te dará una URL como: `https://tu-app.railway.app`
 
 ## 📖 Documentación API
 
 ### Swagger UI
 
-Una vez iniciado el servidor, visita:
+Una vez desplegado, visita:
 
-- **Swagger:** http://localhost:3000/api
-- **API Base:** http://localhost:3000/v1
+- **Swagger:** https://tu-app.railway.app/api
+- **API Base:** https://tu-app.railway.app/v1
 
 ### Ejemplos de uso
 
@@ -164,92 +170,46 @@ GET /v1/deliveries/transaction/uuid-transaction-id
 ## 🧪 Testing
 
 ```bash
-# Tests unitarios
-yarn test
+# Ejecutar tests
+npm run test
 
 # Coverage
-yarn test:cov
+npm run test:cov
 
 # Tests e2e
-yarn test:e2e
+npm run test:e2e
 ```
 
-## 🔧 Scripts Disponibles
+## 🐳 Docker Local
 
 ```bash
-yarn start          # Iniciar en producción
-yarn start:dev      # Iniciar en desarrollo (watch mode)
-yarn build          # Compilar proyecto
-yarn test           # Ejecutar tests
-yarn test:cov       # Coverage de tests
-yarn lint           # Linter
-yarn format         # Prettier
-yarn seed           # Seed de base de datos
-```
-
-## 🛡️ Seguridad
-
-- **Helmet:** Headers de seguridad HTTP
-- **CORS:** Configurado para peticiones cross-origin
-- **Validación:** DTOs validados con class-validator
-- **Variables sensibles:** Manejo seguro con .env
-
-## 🌊 Flujo de Negocio
-
-1. **Cliente** hace petición a `POST /v1/transactions`
-2. **Backend** valida datos y crea transacción local
-3. **Wompi** procesa el pago y responde
-4. **Si PENDING:** Se crea delivery en estado `CREATED`
-5. **Polling/Webhook** detecta cambio a `APPROVED`
-6. **Sistema** actualiza delivery a `PREPARING` y reduce stock
-7. **Cliente** puede consultar estado via `GET /v1/deliveries/transaction/:id`
-
-## 🚀 Deployment
-
-### Docker
-
-```bash
-# Build
-docker build -t store-backend .
-
-# Run
-docker run -p 3000:3000 store-backend
-```
-
-### Docker Compose
-
-```bash
+# Construir y ejecutar
 docker-compose up --build
+
+# Solo base de datos
+docker-compose up postgres
 ```
 
-## 📂 Estructura de Base de Datos
+## 📝 Scripts Disponibles
 
-### Entidades Principales
+```bash
+npm run build          # Construir para producción
+npm run start          # Iniciar aplicación
+npm run start:dev      # Desarrollo con watch
+npm run start:prod     # Producción
+npm run test           # Tests unitarios
+npm run test:cov       # Tests con coverage
+npm run lint           # Linter
+npm run format         # Prettier
+```
 
-- **Product:** productos del catálogo
-- **Customer:** clientes registrados
-- **Transaction:** transacciones de pago
-- **Delivery:** información de entregas
+## 🌟 Características Técnicas
 
-### Relaciones
-
-- Transaction → Customer (many-to-one)
-- Transaction → Product (many-to-one)
-- Delivery → Transaction (one-to-one)
-- Delivery → Customer (many-to-one)
-
-## 🤝 Contribución
-
-1. Fork el proyecto
-2. Crea una rama feature (`git checkout -b feature/nueva-feature`)
-3. Commit tus cambios (`git commit -am 'Add nueva feature'`)
-4. Push a la rama (`git push origin feature/nueva-feature`)
-5. Abre un Pull Request
-
-## 📄 Licencia
-
-Este proyecto está bajo la licencia MIT.
-
----
-
-**Desarrollado con ❤️ usando NestJS y arquitectura hexagonal**
+- **Cobertura de Tests:** 85%+
+- **Arquitectura Hexagonal** con puertos y adaptadores
+- **Inyección de Dependencias** con NestJS
+- **Validación de DTOs** automática
+- **Documentación Swagger** auto-generada
+- **Manejo de errores** centralizado
+- **Logging** estructurado
+- **Variables de entorno** tipadas

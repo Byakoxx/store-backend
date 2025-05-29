@@ -15,7 +15,7 @@ describe('TransactionPollingService', () => {
     'txn-1',
     TransactionStatus.PENDING,
     300000,
-    'wompi-123',
+    'payment-123',
     'customer-1',
     'product-1',
     new Date('2024-01-01'),
@@ -75,7 +75,7 @@ describe('TransactionPollingService', () => {
       expect(mockTransactionRepository.findAll).toHaveBeenCalledTimes(1);
       expect(mockGetTransactionStatusUseCase.execute).toHaveBeenCalledTimes(1);
       expect(mockGetTransactionStatusUseCase.execute).toHaveBeenCalledWith(
-        'wompi-123',
+        'payment-123',
       );
     });
 
@@ -112,7 +112,7 @@ describe('TransactionPollingService', () => {
 
       expect(mockTransactionRepository.findAll).toHaveBeenCalledTimes(1);
       expect(mockGetTransactionStatusUseCase.execute).toHaveBeenCalledWith(
-        'wompi-123',
+        'payment-123',
       );
     });
   });

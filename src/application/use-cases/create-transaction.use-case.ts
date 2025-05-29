@@ -11,7 +11,7 @@ import { ProductRepository } from 'src/domain/ports-out/product.repository';
 import { TransactionRepository } from 'src/domain/ports-out/transaction.repository';
 import { CreateTransactionDto } from 'src/shared/dto/create-transaction.dto';
 import { generatePaymentReference } from 'src/shared/utils/payment-reference.util';
-import { generateIntegritySignature } from 'src/shared/utils/wompi-integrity-signature.util';
+import { generateIntegritySignature } from 'src/shared/utils/payment-integrity-signature.util';
 
 @Injectable()
 export class CreateTransactionUseCase {
@@ -20,7 +20,7 @@ export class CreateTransactionUseCase {
     private readonly customerRepository: CustomerRepository,
     @Inject('TransactionRepository')
     private readonly transactionRepository: TransactionRepository,
-    @Inject('PaymentProviderPort')
+    @Inject('PaymentProvider')
     private readonly paymentProvider: PaymentProviderPort,
     @Inject('ProductRepository')
     private readonly productRepository: ProductRepository,
@@ -61,10 +61,10 @@ export class CreateTransactionUseCase {
       throw new Error('Error al crear la transacción en la base de datos');
     }
 
-    // 2. Llamar a Wompi para crear la transacción
-    const apiUrl = process.env.WOMPI_API_URL!;
-    const privateKey = process.env.WOMPI_PRIVATE_KEY!;
-    const integritySecret = process.env.WOMPI_INTEGRITY_SIGNATURE!;
+    // 2. Llamar al Gateway de Pagos para crear la transacción
+    const apiUrl = process.env.PAYMENT_API_URL!;
+    const privateKey = process.env.PAYMENT_PRIVATE_KEY!;
+    const integritySecret = process.env.PAYMENT_INTEGRITY_SIGNATURE!;
 
     // 2.1 Obtener acceptance token
     const acceptanceToken =
@@ -91,7 +91,7 @@ export class CreateTransactionUseCase {
       integritySecret,
     );
 
-    // 2.4 Construir el payload para Wompi
+    // 2.4 Construir el payload para el Gateway de Pagos
     const payload = {
       amount_in_cents: dto.amount,
       currency: dto.currency,
@@ -105,30 +105,30 @@ export class CreateTransactionUseCase {
       acceptance_token: acceptanceToken,
     };
 
-    // 2.5 Crear la transacción en Wompi
-    const wompiResponse = await this.paymentProvider.createTransaction(
+    // 2.5 Crear la transacción en el Gateway de Pagos
+    const gatewayResponse = await this.paymentProvider.createTransaction(
       payload,
       privateKey,
       apiUrl,
     );
-    const wompiTransactionId = wompiResponse.data.id;
-    const wompiStatus = wompiResponse.data.status as TransactionStatus;
+    const gatewayTransactionId = gatewayResponse.data.id;
+    const gatewayStatus = gatewayResponse.data.status as TransactionStatus;
 
-    // 3. Actualizar la transacción en la base de datos con el wompiTransactionId y el estado
+    // 3. Actualizar la transacción en la base de datos con el gatewayTransactionId y el estado
     const updatedTransaction = await this.transactionRepository.updateStatus(
       transactionId,
-      wompiStatus,
-      wompiTransactionId,
+      gatewayStatus,
+      gatewayTransactionId,
     );
 
     if (!updatedTransaction) {
       throw new Error('Error al actualizar la transacción en la base de datos');
     }
 
-    console.log('wompiStatus en create transaction', wompiStatus);
+    console.log('gatewayStatus en create transaction', gatewayStatus);
 
-    // 4. Si la transacción de Wompi fue creada y está pendiente, crear el delivery
-    if (wompiStatus === TransactionStatus.PENDING) {
+    // 4. Si la transacción del Gateway fue creada y está pendiente, crear el delivery
+    if (gatewayStatus === TransactionStatus.PENDING) {
       // Crear delivery en estado CREATED
       await this.deliveryRepository.create(
         new Delivery(

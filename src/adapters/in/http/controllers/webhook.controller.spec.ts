@@ -15,7 +15,7 @@ describe('WebhookController', () => {
     'txn-1',
     TransactionStatus.PENDING,
     300000,
-    'wompi-123',
+    'payment-123',
     'customer-1',
     'product-1',
     new Date('2024-01-01'),
@@ -52,12 +52,12 @@ describe('WebhookController', () => {
     expect(controller).toBeDefined();
   });
 
-  describe('handleWompiWebhook', () => {
+  describe('handlePaymentWebhook', () => {
     it('should handle webhook for approved transaction', async () => {
       const webhookPayload = {
         data: {
           transaction: {
-            id: 'wompi-123',
+            id: 'payment-123',
             status: 'APPROVED',
           },
         },
@@ -69,10 +69,10 @@ describe('WebhookController', () => {
       mockTransactionRepository.updateStatus.mockResolvedValue(mockTransaction);
       mockProductRepository.decreaseStock.mockResolvedValue({} as any);
 
-      await controller.handleWompiWebhook(webhookPayload);
+      await controller.handlePaymentWebhook(webhookPayload);
 
       expect(mockTransactionRepository.findByPaymentId).toHaveBeenCalledWith(
-        'wompi-123',
+        'payment-123',
       );
       expect(mockTransactionRepository.updateStatus).toHaveBeenCalledWith(
         'txn-1',
@@ -88,7 +88,7 @@ describe('WebhookController', () => {
       const webhookPayload = {
         data: {
           transaction: {
-            id: 'wompi-456',
+            id: 'payment-456',
             status: 'DECLINED',
           },
         },
@@ -99,10 +99,10 @@ describe('WebhookController', () => {
       );
       mockTransactionRepository.updateStatus.mockResolvedValue(mockTransaction);
 
-      await controller.handleWompiWebhook(webhookPayload);
+      await controller.handlePaymentWebhook(webhookPayload);
 
       expect(mockTransactionRepository.findByPaymentId).toHaveBeenCalledWith(
-        'wompi-456',
+        'payment-456',
       );
       expect(mockTransactionRepository.updateStatus).toHaveBeenCalledWith(
         'txn-1',
@@ -115,7 +115,7 @@ describe('WebhookController', () => {
       const webhookPayload = {
         data: {
           transaction: {
-            id: 'wompi-999',
+            id: 'payment-999',
             status: 'APPROVED',
           },
         },
@@ -123,10 +123,10 @@ describe('WebhookController', () => {
 
       mockTransactionRepository.findByPaymentId.mockResolvedValue(null);
 
-      await controller.handleWompiWebhook(webhookPayload);
+      await controller.handlePaymentWebhook(webhookPayload);
 
       expect(mockTransactionRepository.findByPaymentId).toHaveBeenCalledWith(
-        'wompi-999',
+        'payment-999',
       );
       expect(mockTransactionRepository.updateStatus).not.toHaveBeenCalled();
       expect(mockProductRepository.decreaseStock).not.toHaveBeenCalled();
@@ -137,7 +137,7 @@ describe('WebhookController', () => {
         malformed: 'data',
       };
 
-      await controller.handleWompiWebhook(webhookPayload);
+      await controller.handlePaymentWebhook(webhookPayload);
 
       expect(mockTransactionRepository.findByPaymentId).not.toHaveBeenCalled();
       expect(mockTransactionRepository.updateStatus).not.toHaveBeenCalled();
