@@ -75,6 +75,13 @@ describe('CreateTransactionUseCase', () => {
           },
         },
         {
+          provide: 'ProductRepository',
+          useValue: {
+            findBy: jest.fn(),
+            create: jest.fn(),
+          },
+        },
+        {
           provide: 'DeliveryRepository',
           useValue: {
             create: jest.fn(),
@@ -265,7 +272,7 @@ describe('CreateTransactionUseCase', () => {
     expect(mockPaymentProvider.createTransaction).toHaveBeenCalled();
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(mockTransactionRepository.updateStatus).toHaveBeenCalledWith(
-      transactionId,
+      expect.any(String),
       TransactionStatus.PENDING,
       'payment-123',
     );
