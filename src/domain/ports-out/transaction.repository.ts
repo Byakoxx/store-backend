@@ -8,6 +8,5 @@ export interface TransactionRepository {
     status: string,
     paymentId?: string,
   ): Promise<Transaction | null>;
-
   findAll(): Promise<Transaction[]>;
 }

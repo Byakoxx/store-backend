@@ -1,6 +1,7 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { WompiTransactionStatusDto } from 'src/adapters/wompi/dtos/wompi-transaction-status.dto';
 
 @Injectable()
 export class WompiPaymentProvider {
@@ -98,6 +99,32 @@ export class WompiPaymentProvider {
       }
       throw new HttpException(
         'Error creating transaction in Wompi',
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
+  }
+
+  async getTransactionWompiStatus(
+    transactionId: string,
+    apiUrl: string,
+    privateKey: string,
+  ): Promise<WompiTransactionStatusDto> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<WompiTransactionStatusDto>(
+          `${apiUrl}/transactions/${transactionId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${privateKey}`,
+            },
+          },
+        ),
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error getting transaction status from Wompi:', error);
+      throw new HttpException(
+        'Error getting transaction status from Wompi',
         HttpStatus.BAD_GATEWAY,
       );
     }
