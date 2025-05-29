@@ -5,40 +5,40 @@ export class ProductResponseDto {
   id: string;
 
   @ApiProperty({
-    example: 'Camiseta básica',
-    description: 'Nombre del producto',
+    example: 'T-shirt',
+    description: 'Product Name',
   })
   name: string;
 
   @ApiProperty({
-    example: 'Camiseta de algodón 100% orgánico',
-    description: 'Descripción del producto',
+    example: 'T-shirt',
+    description: 'Product Description',
     nullable: true,
   })
   description: string | null;
 
-  @ApiProperty({ example: 19.99, description: 'Precio del producto' })
+  @ApiProperty({ example: 19.99, description: 'Product Price' })
   price: number;
 
-  @ApiProperty({ example: 50, description: 'Unidades disponibles en stock' })
+  @ApiProperty({ example: 50, description: 'Product Stock' })
   stock: number;
 
   @ApiProperty({
-    example: 'https://example.com/camiseta.jpg',
-    description: 'URL de la imagen del producto',
+    example: 'https://example.com/product.jpg',
+    description: 'Product Image',
     nullable: true,
   })
   image: string | null;
 
   @ApiProperty({
     example: '2024-05-28T20:00:00.000Z',
-    description: 'Fecha de creación',
+    description: 'Product Created At',
   })
   createdAt: Date;
 
   @ApiProperty({
     example: '2024-05-28T20:00:00.000Z',
-    description: 'Fecha de última actualización',
+    description: 'Product Updated At',
   })
   updatedAt: Date;
 }
