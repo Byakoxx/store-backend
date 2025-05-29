@@ -7,3 +7,9 @@ startCommand = "yarn start:prod"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
+
+[[deploy.preDeploySteps]]
+command = "npx prisma db push"
+
+[[deploy.preDeploySteps]]
+command = "npx prisma db seed"
