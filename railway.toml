@@ -9,7 +9,16 @@ healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 
 [[deploy.preDeploySteps]]
-command = "npx prisma db push"
+command = "echo 'Starting Prisma setup...'"
+
+[[deploy.preDeploySteps]]
+command = "npx prisma generate"
+
+[[deploy.preDeploySteps]]
+command = "npx prisma db push --force-reset"
 
 [[deploy.preDeploySteps]]
 command = "npx prisma db seed"
+
+[[deploy.preDeploySteps]]
+command = "echo 'Prisma setup completed!'"
