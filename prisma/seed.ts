@@ -13,7 +13,8 @@ async function main() {
         description: 'Camiseta de algodón 100% orgánico',
         price: 19.99,
         stock: 50,
-        image: 'https://example.com/camiseta.jpg',
+        image:
+          'https://shop.mango.com/assets/rcs/pics/static/T8/fotos/S/87040598_99.jpg?imwidth=2048&imdensity=1&ts=1733414659633',
         createdAt: new Date(),
         updatedAt: new Date(),
       },

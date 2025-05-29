@@ -33,7 +33,18 @@ export class ProductPrismaRepository implements ProductRepository {
   }
 
   async findAll(): Promise<Product[]> {
-    if (!process.env.DATABASE_URL) {
+    // Check if we have database connection
+    const hasDatabase = this.hasDatabaseConnection();
+
+    // Temporary debugging
+    console.log('🔍 DEBUG - DATABASE_URL exists:', !!process.env.DATABASE_URL);
+    console.log(
+      '🔍 DEBUG - DATABASE_URL:',
+      process.env.DATABASE_URL?.substring(0, 50) + '...',
+    );
+    console.log('🔍 DEBUG - Has database connection:', hasDatabase);
+
+    if (!hasDatabase) {
       console.log('🔄 Using mock products (no database)');
       return this.getMockProducts();
     }
@@ -53,6 +64,23 @@ export class ProductPrismaRepository implements ProductRepository {
           p.updatedAt,
         ),
     );
+  }
+
+  private hasDatabaseConnection(): boolean {
+    const databaseUrl = process.env.DATABASE_URL;
+
+    // If no DATABASE_URL at all
+    if (!databaseUrl) {
+      return false;
+    }
+
+    // If DATABASE_URL points to localhost, it won't work in Railway
+    if (databaseUrl.includes('localhost')) {
+      console.log('🚨 DATABASE_URL points to localhost, not usable in Railway');
+      return false;
+    }
+
+    return true;
   }
 
   async findById(id: string): Promise<Product | null> {
