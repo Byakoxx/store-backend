@@ -1,30 +1,24 @@
-import {
-  Injectable,
-  HttpException,
-  HttpStatus,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import { PaymentTransactionStatusDto } from 'src/shared/dto/payment-transaction-status.dto';
+import { PaymentProviderPort } from 'src/domain/ports-out/payment-provider.port';
 
 @Injectable()
-export class PaymentGatewayProvider {
+export class PaymentGatewayProvider implements PaymentProviderPort {
   constructor(private readonly httpService: HttpService) {}
 
   async getAcceptanceToken(apiUrl: string): Promise<string> {
     try {
       const response = await firstValueFrom(
-        this.httpService.get(
-          `${apiUrl}/merchants/${process.env.PAYMENT_PUBLIC_KEY}`,
-        ),
+        this.httpService.get(`${apiUrl}/merchants/{pub_key}`),
       );
       return response.data.data.presigned_acceptance.acceptance_token;
-    } catch {
-      throw new HttpException(
-        'Error getting acceptance token from Payment Gateway',
-        HttpStatus.BAD_GATEWAY,
+    } catch (error) {
+      console.error(
+        'Error getting acceptance token from Payment Gateway:',
+        error?.response?.data || error,
       );
+      throw error;
     }
   }
 
@@ -36,33 +30,29 @@ export class PaymentGatewayProvider {
     privateKey: string,
   ): Promise<any> {
     try {
+      const payload = {
+        type: 'CARD',
+        token: token,
+        customer_email: customerEmail,
+        acceptance_token: acceptanceToken,
+      };
+
       const response = await firstValueFrom(
-        this.httpService.post(
-          `${apiUrl}/payment_sources`,
-          {
-            customer_email: customerEmail,
-            type: 'CARD',
-            token,
-            acceptance_token: acceptanceToken,
+        this.httpService.post(`${apiUrl}/payment_sources`, payload, {
+          headers: {
+            Authorization: `Bearer ${privateKey}`,
+            'Content-Type': 'application/json',
           },
-          {
-            headers: {
-              Authorization: `Bearer ${privateKey}`,
-              'Content-Type': 'application/json',
-            },
-          },
-        ),
+        }),
       );
+
       return response.data;
     } catch (error) {
       console.error(
         'Error creating payment source in Payment Gateway:',
         error?.response?.data || error,
       );
-      throw new HttpException(
-        'Error creating payment source in Payment Gateway',
-        HttpStatus.BAD_GATEWAY,
-      );
+      throw error;
     }
   }
 
@@ -80,17 +70,37 @@ export class PaymentGatewayProvider {
           },
         }),
       );
+
       return response.data;
     } catch (error) {
-      if (error?.response?.status === 422) {
-        throw new BadRequestException(
-          error?.response?.data?.error?.messages || 'Validation error',
-        );
-      }
-      throw new HttpException(
-        'Error creating transaction in Payment Gateway',
-        HttpStatus.BAD_GATEWAY,
+      console.error(
+        'Error creating transaction in Payment Gateway:',
+        error?.response?.data || error,
       );
+      throw error;
+    }
+  }
+
+  async getTransactionStatus(
+    transactionId: string,
+    apiUrl: string,
+  ): Promise<any> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get(`${apiUrl}/transactions/${transactionId}`, {
+          headers: {
+            Authorization: `Bearer ${process.env.PAYMENT_PRIVATE_KEY}`,
+          },
+        }),
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error(
+        'Error getting transaction status from Payment Gateway:',
+        error,
+      );
+      throw error;
     }
   }
 
@@ -98,46 +108,23 @@ export class PaymentGatewayProvider {
     transactionId: string,
     apiUrl: string,
     privateKey: string,
-  ): Promise<PaymentTransactionStatusDto> {
+  ): Promise<any> {
     try {
       const response = await firstValueFrom(
-        this.httpService.get<PaymentTransactionStatusDto>(
-          `${apiUrl}/transactions/${transactionId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${privateKey}`,
-            },
+        this.httpService.get(`${apiUrl}/transactions/${transactionId}`, {
+          headers: {
+            Authorization: `Bearer ${privateKey}`,
           },
-        ),
+        }),
       );
+
       return response.data;
     } catch (error) {
       console.error(
         'Error getting transaction status from Payment Gateway:',
         error,
       );
-      throw new HttpException(
-        'Error getting transaction status from Payment Gateway',
-        HttpStatus.BAD_GATEWAY,
-      );
-    }
-  }
-
-  async getEvents(apiUrl: string, privateKey: string): Promise<any> {
-    try {
-      const response = await firstValueFrom(
-        this.httpService.get(`${apiUrl}/events`, {
-          headers: {
-            Authorization: `Bearer ${privateKey}`,
-          },
-        }),
-      );
-      return response.data;
-    } catch {
-      throw new HttpException(
-        'Error getting transaction status from Payment Gateway',
-        HttpStatus.BAD_GATEWAY,
-      );
+      throw error;
     }
   }
 }

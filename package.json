@@ -18,6 +18,10 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:clean": "jest --silent",
+    "test:clean:cov": "jest --coverage --silent",
+    "test:quiet": "NODE_OPTIONS='--max_old_space_size=4096' jest --silent --reporters=default",
+    "test:quiet:cov": "NODE_OPTIONS='--max_old_space_size=4096' jest --coverage --silent --reporters=default",
     "seed": "ts-node --transpile-only prisma/seed.ts",
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },

@@ -8,6 +8,6 @@ export class UpdateTransactionStatusDto {
   })
   status: TransactionStatus;
 
-  @ApiProperty({ example: 'wompi_123', required: false })
+  @ApiProperty({ example: 'payment_123', required: false })
   paymentId?: string;
 }
