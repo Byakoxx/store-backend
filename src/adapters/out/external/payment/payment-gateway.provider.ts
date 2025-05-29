@@ -35,6 +35,21 @@ export class PaymentGatewayProvider implements PaymentProviderPort {
     privateKey: string,
   ): Promise<any> {
     try {
+      // DEBUG: Log the privateKey to see what's wrong
+      console.log('🔍 DEBUG privateKey length:', privateKey?.length);
+      console.log(
+        '🔍 DEBUG privateKey chars:',
+        privateKey?.split('').slice(0, 10),
+      );
+      console.log(
+        '🔍 DEBUG privateKey includes spaces:',
+        privateKey?.includes(' '),
+      );
+      console.log(
+        '🔍 DEBUG privateKey includes newlines:',
+        privateKey?.includes('\n'),
+      );
+
       const payload = {
         type: 'CARD',
         token: token,
