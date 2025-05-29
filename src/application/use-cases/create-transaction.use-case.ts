@@ -86,14 +86,14 @@ export class CreateTransactionUseCase {
       dto.reference || generatePaymentReference(dto.customer.email, Date.now());
     const signature = generateIntegritySignature(
       paymentReference,
-      dto.amount,
+      dto.amount * 100,
       dto.currency,
       integritySecret,
     );
 
     // 2.4 Construir el payload para el Gateway de Pagos
     const payload = {
-      amount_in_cents: dto.amount,
+      amount_in_cents: dto.amount * 100,
       currency: dto.currency,
       signature,
       customer_email: dto.customer.email,
