@@ -21,4 +21,20 @@ export class CreateTransactionDto {
 
   @ApiProperty({ example: 3, description: 'Cantidad de productos a comprar' })
   items: number;
+
+  @ApiProperty({
+    example: {
+      country: 'Colombia',
+      city: 'Bogotá',
+      address: 'Calle 123 #45-67',
+      zipCode: '110111',
+    },
+    description: 'Información de entrega',
+  })
+  delivery: {
+    country: string;
+    city: string;
+    address: string;
+    zipCode: string;
+  };
 }

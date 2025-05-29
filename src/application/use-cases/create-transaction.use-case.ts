@@ -2,7 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Customer } from 'src/domain/models/customer.entity';
 import { TransactionStatus } from 'src/domain/models/transaction-status.enum';
 import { Transaction } from 'src/domain/models/transaction.entity';
+import { Delivery } from 'src/domain/models/delivery.entity';
+import { DeliveryStatus } from 'src/domain/models/delivery-status.enum';
 import { CustomerRepository } from 'src/domain/ports-out/customer.repository';
+import { DeliveryRepository } from 'src/domain/ports-out/delivery.repository';
 import { PaymentProviderPort } from 'src/domain/ports-out/payment-provider.port';
 import { ProductRepository } from 'src/domain/ports-out/product.repository';
 import { TransactionRepository } from 'src/domain/ports-out/transaction.repository';
@@ -21,6 +24,8 @@ export class CreateTransactionUseCase {
     private readonly paymentProvider: PaymentProviderPort,
     @Inject('ProductRepository')
     private readonly productRepository: ProductRepository,
+    @Inject('DeliveryRepository')
+    private readonly deliveryRepository: DeliveryRepository,
   ) {}
 
   async execute(dto: CreateTransactionDto): Promise<Transaction> {
@@ -118,6 +123,28 @@ export class CreateTransactionUseCase {
 
     if (!updatedTransaction) {
       throw new Error('Error al actualizar la transacción en la base de datos');
+    }
+
+    console.log('wompiStatus en create transaction', wompiStatus);
+
+    // 4. Si la transacción de Wompi fue creada y está pendiente, crear el delivery
+    if (wompiStatus === TransactionStatus.PENDING) {
+      // Crear delivery en estado CREATED
+      await this.deliveryRepository.create(
+        new Delivery(
+          crypto.randomUUID(),
+          DeliveryStatus.CREATED,
+          dto.delivery.country,
+          dto.delivery.city,
+          dto.delivery.address,
+          dto.delivery.zipCode,
+          null, // trackingCode se genera después
+          updatedTransaction.id,
+          new Date(),
+          new Date(),
+          customer.id,
+        ),
+      );
     }
 
     return updatedTransaction;
