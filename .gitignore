@@ -113,3 +113,6 @@ lerna-debug.log*
 *.swo
 
 /generated/prisma
+
+
+infoTest.text
