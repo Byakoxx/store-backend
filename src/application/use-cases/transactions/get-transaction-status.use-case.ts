@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { WompiPaymentProvider } from 'src/adapters/out/external/wompi/wompi-payment.provider';
 import { TransactionRepository } from 'src/domain/ports-out/transaction.repository';
+import { ProductRepository } from 'src/domain/ports-out/product.repository';
 
 @Injectable()
 export class GetTransactionStatusUseCase {
@@ -11,6 +12,8 @@ export class GetTransactionStatusUseCase {
     private readonly wompiProvider: WompiPaymentProvider,
     @Inject('TransactionRepository')
     private readonly transactionRepository: TransactionRepository,
+    @Inject('ProductRepository')
+    private readonly productRepository: ProductRepository,
   ) {}
 
   async execute(wompiTransactionId: string): Promise<string> {
@@ -38,6 +41,13 @@ export class GetTransactionStatusUseCase {
       `Actualizando estado en DB para transacción ${transaction.id}: ${status}`,
     );
     await this.transactionRepository.updateStatus(transaction.id, status);
+
+    if (status === 'APPROVED' && transaction.items > 0) {
+      await this.productRepository.decreaseStock(
+        transaction.productId,
+        transaction.items,
+      );
+    }
 
     return status;
   }

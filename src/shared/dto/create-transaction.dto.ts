@@ -18,4 +18,7 @@ export class CreateTransactionDto {
 
   @ApiProperty({ example: 'my-custom-ref-123', required: false })
   reference?: string;
+
+  @ApiProperty({ example: 3, description: 'Cantidad de productos a comprar' })
+  items: number;
 }

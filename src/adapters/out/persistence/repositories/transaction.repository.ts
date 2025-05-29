@@ -19,6 +19,7 @@ export class TransactionPrismaRepository implements TransactionRepository {
         productId: transaction.productId,
         createdAt: transaction.createdAt,
         updatedAt: transaction.updatedAt,
+        items: transaction.items,
       },
     });
 
@@ -73,6 +74,7 @@ export class TransactionPrismaRepository implements TransactionRepository {
       t.productId,
       t.createdAt,
       t.updatedAt,
+      t.items,
     );
   }
 }

@@ -4,6 +4,7 @@ import { TransactionStatus } from 'src/domain/models/transaction-status.enum';
 import { Transaction } from 'src/domain/models/transaction.entity';
 import { CustomerRepository } from 'src/domain/ports-out/customer.repository';
 import { PaymentProviderPort } from 'src/domain/ports-out/payment-provider.port';
+import { ProductRepository } from 'src/domain/ports-out/product.repository';
 import { TransactionRepository } from 'src/domain/ports-out/transaction.repository';
 import { CreateTransactionDto } from 'src/shared/dto/create-transaction.dto';
 import { generatePaymentReference } from 'src/shared/utils/payment-reference.util';
@@ -18,6 +19,8 @@ export class CreateTransactionUseCase {
     private readonly transactionRepository: TransactionRepository,
     @Inject('PaymentProviderPort')
     private readonly paymentProvider: PaymentProviderPort,
+    @Inject('ProductRepository')
+    private readonly productRepository: ProductRepository,
   ) {}
 
   async execute(dto: CreateTransactionDto): Promise<Transaction> {
@@ -45,6 +48,7 @@ export class CreateTransactionUseCase {
         dto.productId,
         new Date(),
         new Date(),
+        dto.items,
       ),
     );
 

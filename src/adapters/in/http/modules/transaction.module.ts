@@ -10,6 +10,7 @@ import { HttpModule } from '@nestjs/axios';
 import { TransactionPollingService } from 'src/application/services/transaction-polling.service';
 import { GetTransactionStatusUseCase } from 'src/application/use-cases/transactions/get-transaction-status.use-case';
 import { WebhookController } from '../controllers/webhook.controller';
+import { ProductPrismaRepository } from 'src/adapters/out/persistence/repositories/product.repository';
 
 @Module({
   imports: [PrismaModule, HttpModule],
@@ -32,6 +33,10 @@ import { WebhookController } from '../controllers/webhook.controller';
     WompiPaymentProvider,
     CreateTransactionUseCase,
     UpdateTransactionStatusUseCase,
+    {
+      provide: 'ProductRepository',
+      useClass: ProductPrismaRepository,
+    },
   ],
   exports: ['TransactionRepository'],
 })
