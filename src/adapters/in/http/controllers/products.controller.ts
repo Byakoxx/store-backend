@@ -1,7 +1,8 @@
 import { Controller, Get, Inject, Param } from '@nestjs/common';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ProductService } from 'src/application/ports-in/product-service-interface';
-import { Product } from 'src/domain/models/product.entity';
+import { toProductResponseDto } from 'src/shared/dto/product-mapper';
+import { ProductResponseDto } from 'src/shared/dto/product-response.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -12,13 +13,18 @@ export class ProductsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all products' })
-  async findAll(): Promise<Product[]> {
-    return this.productService.getAll();
+  @ApiResponse({ status: 200, description: 'Lista de productos' })
+  async findAll(): Promise<ProductResponseDto[]> {
+    const products = await this.productService.getAll();
+    return products.map(toProductResponseDto);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a product by id' })
-  async findById(@Param('id') id: string): Promise<Product | null> {
-    return this.productService.getById(id);
+  @ApiResponse({ status: 200, description: 'Producto encontrado' })
+  @ApiResponse({ status: 404, description: 'Producto no encontrado' })
+  async findById(@Param('id') id: string): Promise<ProductResponseDto | null> {
+    const product = await this.productService.getById(id);
+    return product ? toProductResponseDto(product) : null;
   }
 }
