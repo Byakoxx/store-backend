@@ -16,10 +16,10 @@ RUN yarn install --frozen-lockfile --network-timeout 1000000
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the application (tsc-alias is needed here)
 RUN yarn build
 
-# Remove dev dependencies to reduce size
+# Remove dev dependencies to reduce size AFTER build
 RUN yarn install --production --frozen-lockfile && yarn cache clean
 
 EXPOSE 3000
