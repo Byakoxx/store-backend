@@ -1,8 +1,6 @@
 import * as crypto from 'crypto';
 
-const PAYMENT_INTEGRITY_SIGNATURE =
-  process.env.PAYMENT_INTEGRITY_SIGNATURE ||
-  'test_integrity_4ab53b2b2d5fa0a6b5cd5dee5da56cb5';
+const PAYMENT_INTEGRITY_SIGNATURE = process.env.PAYMENT_INTEGRITY_SIGNATURE;
 
 export function getRandomTimeOfDay(): string {
   const hours = Math.floor(Math.random() * 24);
@@ -28,7 +26,7 @@ export function generatePaymentSignature(
   reference: string,
   amount: number,
   currency: string,
-  integritySignature: string = PAYMENT_INTEGRITY_SIGNATURE,
+  integritySignature: string = PAYMENT_INTEGRITY_SIGNATURE || '',
 ): string {
   const concatenatedString = `${reference}${amount}${currency}${integritySignature}`;
   return crypto.createHash('sha256').update(concatenatedString).digest('hex');
