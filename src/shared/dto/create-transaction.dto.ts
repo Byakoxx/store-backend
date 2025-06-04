@@ -7,6 +7,9 @@ export class CreateTransactionDto {
   @ApiProperty({ example: 300000 })
   amount: number;
 
+  @ApiProperty({ example: 10000, required: false })
+  vatFee?: number;
+
   @ApiProperty({ example: 'COP' })
   currency: string;
 

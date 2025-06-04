@@ -39,6 +39,7 @@ model Transaction {
   id          String   @id @default(uuid())
   status      String   // PENDING, COMPLETED, FAILED
   amount      Float
+  vatFee      Float?
   paymentId   String?  // Payment payment ID
   customerId  String
   customer    Customer @relation(fields: [customerId], references: [id])

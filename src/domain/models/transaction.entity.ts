@@ -5,6 +5,7 @@ export class Transaction {
     public readonly id: string,
     public status: TransactionStatus,
     public amount: number,
+    public vatFee: number | null,
     public paymentId: string | null,
     public customerId: string,
     public productId: string,

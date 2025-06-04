@@ -41,6 +41,11 @@ export class CreateTransactionUseCase {
       );
     }
 
+    console.log({
+      vatFee: dto.vatFee,
+      amount: dto.amount,
+    });
+
     // 1. Crear la transacción en la base de datos con estado CREATED
     const transactionId = crypto.randomUUID();
     const transaction = await this.transactionRepository.create(
@@ -48,6 +53,7 @@ export class CreateTransactionUseCase {
         transactionId,
         TransactionStatus.CREATED,
         dto.amount,
+        dto.vatFee || null,
         null, // paymentId aún no existe
         customer.id,
         dto.productId,
